@@ -1,0 +1,2855 @@
+<htmlform>
+  <head>
+    <script type="text/javascript">
+      //Auto filling field A with B
+      function autoFillField(to,from){
+        var fillWith=getValue(from+'.value');
+        setValue(to+'.value',fillWith);
+      }
+
+
+
+      //form current date
+      function formatCurrentDate(){
+        var date = new Date();
+        var day = date.getDate();
+        var monthIndex = date.getMonth()+1;
+        var year = date.getFullYear();
+
+
+        if(10>monthIndex){
+          monthIndex='0'+monthIndex
+        }
+        if(10>day){
+          day='0'+day
+        }
+        var today = year+'-'+monthIndex+'-'+day;
+        return today;
+      }
+      //Validation and Skip Logic functions
+      var errorMessage = {};
+
+      //Handle Error Messages
+      function fieldErrorMessages(){
+        //errorMessage is a global variable for error messages
+        var returnVal=0;
+        $j.each( errorMessage, function( key, fieldError) {
+          if(fieldError!=''){
+            returnVal=1;
+          }
+
+        });
+        return returnVal;
+      }
+
+      //Handle required fields
+      function requiredFields(fields){
+        arrayElements=fields.split(',');
+        var returnVal=0;
+        $j.each( arrayElements, function( key, fieldId) {
+          var fieldValue=getValue(fieldId+'.value');
+          if(fieldValue==''){
+            getField(fieldId+'.error').html('Required').show();
+            returnVal=1;
+          }
+          else{
+            getField(fieldId+'.error').html('').hide();
+          }
+        });
+        return returnVal;
+      }
+
+      //Uncheck checked checkboxes and clear inputs
+      function clearHtmlElements(sectionId){
+//search by ID
+        $j('#'+sectionId).find("input[type$='checkbox']").each(function() {
+          $j(this).attr("checked",false);
+          $j(this).change();
+
+        });
+
+//search by Class
+        $j('.'+sectionId).find("input[type$='checkbox']").each(function() {
+          $j(this).attr("checked",false);
+          $j(this).change();
+
+        });
+
+//clear inputs by ID
+        $j('#'+sectionId).find("input[type$='text']").each(function() {
+          var htmlElement=$j(this);
+          $j(this).val('');
+        });
+
+//clear inputs by class
+        $j('.'+sectionId).find("input[type$='text']").each(function() {
+          var htmlElement=$j(this);
+          $j(this).val('');
+        });
+
+//clear selects by Id
+        $j('#'+sectionId).find("select").each(function() {
+          var htmlElement=$j(this);
+          $j(this).val('');
+        });
+
+//clear selects by class
+        $j('.'+sectionId).find("select").each(function() {
+          var htmlElement=$j(this);
+          $j(this).val('');
+        });
+
+      }
+
+      //receive a div id,span id,tr id or td id and Uncheck any checkboxes and clear inputs
+      function disableHtmlElements(sectionId,clearData){
+
+        var sections=sectionId.split(',');
+        $j.each(sections, function( index,section ) {
+          //Uncheck any checkboxes and clear inputs
+          clearHtmlElements(section);
+
+          //disable inputs and selects by ID
+          $j('#'+section).find("input").attr("disabled",true);
+          $j('#'+section).find("select").attr("disabled",true);
+          $j('#'+section).find("button").attr("disabled",true);
+
+          //disable inputs and selects by Class
+          $j('.'+section).find("input").attr("disabled",true);
+          $j('.'+section).find("select").attr("disabled",true);
+          $j('.'+section).find("button").attr("disabled",true);
+        });
+      }
+
+      function enableHtmlElements(sectionId){
+        var sections=sectionId.split(',');
+        $j.each(sections, function( index,section ) {
+          //enable by id
+          $j('#'+section).find("input").attr("disabled",false);
+          $j('#'+section).find("select").attr("disabled",false);
+          $j('#'+section).find("button").attr("disabled",false);
+
+//enable by class
+          $j('.'+section).find("input").attr("disabled",false);
+          $j('.'+section).find("select").attr("disabled",false);
+          $j('.'+section).find("button").attr("disabled",false);
+
+
+        });
+
+      }
+
+      function hideHtmlField(htmlField,clearData){
+        if(clearData=='true'){
+          setValue(htmlField+'.value','');
+        }
+        $j(htmlField) .attr("disabled",true);
+      }
+
+      //show fields[if multiple fields to be shown, separate by commas]
+
+      function conditionalFieldDisplay(question,questionResponse,htmlField,clear,action){
+        var questionValue=getValue(question+'.value');
+        var fieldType=(typeof questionResponse);
+        fieldsArray = htmlField.split(',');
+
+        var allowedResponses=[];
+        if(fieldType=='number'){
+
+        }
+
+        if(fieldType=='string'){
+          allowedResponses=questionResponse.split(',');
+
+        }
+
+        if(allowedResponses.length>0){
+
+          if($j.inArray(questionValue,allowedResponses)!==-1){
+            if(action=='show')
+              enableHtmlElements(htmlField);
+            if(action=='hide')
+              disableHtmlElements(htmlField,'false');
+          }
+          else{
+            if(action=='hide')
+              enableHtmlElements(htmlField);
+            if(action=='show')
+              disableHtmlElements(htmlField,'false');
+          }
+        }
+        else{
+          hideShowField(question,questionResponse,htmlField,clear,action)
+        }
+      }
+
+      function hideShowField(question,questionResponse,fields,clear,action){
+
+        if((getValue(question+'.value')==questionResponse)||(questionResponse=='showall')){
+
+          if(action=='show')
+            enableHtmlElements(fields);
+
+
+          if(action=='hide')
+            disableHtmlElements(fields,clear);
+
+        }
+        else {
+
+          if(action=='show')
+            disableHtmlElements(fields,clear);
+
+          if(action=='hide')
+            enableHtmlElements(fields);
+        }
+      }
+
+      function showFieldArray(arrayOfFields){
+        $j.each(arrayOfFields, function( index,field ) {
+          $j('#'+field) .attr("disabled",false);
+        });
+      }
+
+      function hideFieldArray(arrayOfFields,clearData){
+        $j.each(arrayOfFields, function( index,field ) {
+          if(clearData=='true'){
+            setValue(field+'.value','');
+          }
+          $j('#'+field) .attr("disabled",true);
+        });
+      }
+
+
+    </script>
+    <!-- 1. A Script to Handle Add/remove side effect/toxicity Drugs -->
+    <script type="text/javascript">
+      if(jQuery){
+        $j(document).ready(function(){
+          $j('#1-removetoxicityDrug').remove();
+          $j('#10-addtoxicityDrug').remove();
+          $j('#1-toggletoxicityDrug').show();
+
+        });
+
+        $j(document).ready(function(){
+          $j('button.addtoxicityDrug').live("click", function(){
+            var addDrugButtonId = parseFloat(this.id) + 1;
+            var addDrugId = "#" + addDrugButtonId + "-toggletoxicityDrug";
+            $j(addDrugId).toggle(true);
+            $j('#' + this.id).toggle(false); $j('#' + parseFloat(this.id) + '-removetoxicityDrug').toggle(false);
+            return false;});
+        });
+
+        $j(document).ready(function(){
+          $j('button.removetoxicityDrug').live("click", function(){
+            var removeDrugButtonId = parseFloat(this.id) - 1;
+            var addDrugId = "#" + parseFloat(this.id) + "-toggletoxicityDrug";
+            $j(addDrugId).toggle(false);
+            $j( ':input:not(:button)', addDrugId).val([]);
+            $j('#' + removeDrugButtonId + '-addtoxicityDrug').toggle(true); $j('#' + removeDrugButtonId + '-removetoxicityDrug').toggle(true);
+
+            return false;});
+
+        });
+      }
+    </script>
+
+    <!-- 1. A Script to Handle Add/remove Hospitalization reason -->
+    <script type="text/javascript">
+      if(jQuery){
+        $j(document).ready(function(){
+          $j('#1-removeHospreason').remove();
+          $j('#10-addHospreason').remove();
+          $j('#1-toggleHospreason').show();
+
+          $j('#11-removeHospreason').remove();
+          $j('#20-addHospreason').remove();
+          $j('#11-toggleHospreason').show();
+
+          $j('#21-removeHospreason').remove();
+          $j('#30-addHospreason').remove();
+          $j('#21-toggleHospreason').show();
+        });
+
+        $j(document).ready(function(){
+          $j('button.addHospreason').live("click", function(){
+            var correctedAddButtonId = parseFloat(this.id) + 1;
+            var contentAddId = "#" + correctedAddButtonId + "-toggleHospreason";
+            $j(contentAddId).toggle(true);
+            $j('#' + this.id).toggle(false); $j('#' + parseFloat(this.id) + '-removeHospreason').toggle(false);
+            return false;});
+        });
+
+        $j(document).ready(function(){
+          $j('button.removeHospreason').live("click", function(){
+            var correctedRemoveButtonId = parseFloat(this.id) - 1;
+            var contentAddId = "#" + parseFloat(this.id) + "-toggleHospreason";
+            $j(contentAddId).toggle(false);
+            $j( ':input:not(:button)', contentAddId).val([]);
+            $j('#' + correctedRemoveButtonId + '-addHospreason').toggle(true); $j('#' + correctedRemoveButtonId + '-removeHospreason').toggle(true);
+
+            return false;});
+
+        });
+      }
+    </script>
+    <!-- 1. A Script to Handle Add/remove Previous Hospitalisation Diagnosis -->
+    <script type="text/javascript">
+      if(jQuery){
+        $j(document).ready(function(){
+          $j('#1-removePrevhospdiag').remove();
+          $j('#10-addPrevhospdiag').remove();
+          $j('#1-togglePrevhospdiag').show();
+
+          $j('#11-removePrevhospdiag').remove();
+          $j('#20-addPrevhospdiag').remove();
+          $j('#11-togglePrevhospdiag').show();
+
+          $j('#21-removePrevhospdiag').remove();
+          $j('#30-addPrevhospdiag').remove();
+          $j('#21-togglePrevhospdiag').show();
+        });
+
+        $j(document).ready(function(){
+          $j('button.addPrevhospdiag').live("click", function(){
+            var correctedAddButtonId = parseFloat(this.id) + 1;
+            var contentAddId = "#" + correctedAddButtonId + "-togglePrevhospdiag";
+            $j(contentAddId).toggle(true);
+            $j('#' + this.id).toggle(false); $j('#' + parseFloat(this.id) + '-removePrevhospdiag').toggle(false);
+            return false;});
+        });
+
+        $j(document).ready(function(){
+          $j('button.removePrevhospdiag').live("click", function(){
+            var correctedRemoveButtonId = parseFloat(this.id) - 1;
+            var contentAddId = "#" + parseFloat(this.id) + "-togglePrevhospdiag";
+            $j(contentAddId).toggle(false);
+            $j( ':input:not(:button)', contentAddId).val([]);
+            $j('#' + correctedRemoveButtonId + '-addPrevhospdiag').toggle(true); $j('#' + correctedRemoveButtonId + '-removePrevhospdiag').toggle(true);
+
+            return false;});
+
+        });
+      }
+    </script>
+    <!-- 2. A Script to Handle Add/remove problem list -->
+    <script type="text/javascript">
+      if(jQuery){
+        $j(document).ready(function(){
+          $j('#1-removeEntry').remove();
+          $j('#10-addEntry').remove();
+          $j('#1-toggleContainer').show();
+
+          $j('#11-removeEntry').remove();
+          $j('#20-addEntry').remove();
+          $j('#11-toggleContainer').show();
+
+          $j('#21-removeEntry').remove();
+          $j('#30-addEntry').remove();
+          $j('#21-toggleContainer').show();
+        });
+
+        $j(document).ready(function(){
+          $j('button.addEntry').live("click", function(){
+            var correctedAddButtonId = parseFloat(this.id) + 1;
+            var contentAddId = "#" + correctedAddButtonId + "-toggleContainer";
+            $j(contentAddId).toggle(true);
+            $j('#' + this.id).toggle(false); $j('#' + parseFloat(this.id) + '-removeEntry').toggle(false);
+            return false;});
+        });
+
+        $j(document).ready(function(){
+          $j('button.removeEntry').live("click", function(){
+            var correctedRemoveButtonId = parseFloat(this.id) - 1;
+            var contentAddId = "#" + parseFloat(this.id) + "-toggleContainer";
+            $j(contentAddId).toggle(false);
+            $j( ':input:not(:button)', contentAddId).val([]);
+            $j('#' + correctedRemoveButtonId + '-addEntry').toggle(true); $j('#' + correctedRemoveButtonId + '-removeEntry').toggle(true);
+
+            return false;});
+
+        });
+      }
+    </script>
+
+    <!-- 3. A Script to Handle Add/remove Drugs -->
+    <script type="text/javascript">
+      if(jQuery){
+        $j(document).ready(function(){
+          $j('#1-removeDrug').remove();
+          $j('#10-addDrug').remove();
+          $j('#1-toggleDrug').show();
+
+        });
+
+        $j(document).ready(function(){
+          $j('button.addDrug').live("click", function(){
+            var addDrugButtonId = parseFloat(this.id) + 1;
+            var addDrugId = "#" + addDrugButtonId + "-toggleDrug";
+            $j(addDrugId).toggle(true);
+            $j('#' + this.id).toggle(false); $j('#' + parseFloat(this.id) + '-removeDrug').toggle(false);
+            return false;});
+        });
+
+        $j(document).ready(function(){
+          $j('button.removeDrug').live("click", function(){
+            var removeDrugButtonId = parseFloat(this.id) - 1;
+            var addDrugId = "#" + parseFloat(this.id) + "-toggleDrug";
+            $j(addDrugId).toggle(false);
+            $j( ':input:not(:button)', addDrugId).val([]);
+            $j('#' + removeDrugButtonId + '-addDrug').toggle(true); $j('#' + removeDrugButtonId + '-removeDrug').toggle(true);
+
+            return false;});
+
+        });
+      }
+    </script>
+    <!-- 3. A Script to Handle Add/remove Other Drugs -->
+    <script type="text/javascript">
+      if(jQuery){
+        $j(document).ready(function(){
+          $j('#1-removeOtherDrugs').remove();
+          $j('#10-addOtherDrugs').remove();
+          $j('#1-toggleOtherDrugs').show();
+
+        });
+
+        $j(document).ready(function(){
+          $j('button.addOtherDrugs').live("click", function(){
+            var addOtherDrugsButtonId = parseFloat(this.id) + 1;
+            var addOtherDrugsId = "#" + addOtherDrugsButtonId + "-toggleOtherDrugs";
+            $j(addOtherDrugsId).toggle(true);
+            $j('#' + this.id).toggle(false); $j('#' + parseFloat(this.id) + '-removeOtherDrugs').toggle(false);
+            return false;});
+        });
+
+        $j(document).ready(function(){
+          $j('button.removeOtherDrugs').live("click", function(){
+            var removeOtherDrugsButtonId = parseFloat(this.id) - 1;
+            var addOtherDrugsId = "#" + parseFloat(this.id) + "-toggleOtherDrugs";
+            $j(addOtherDrugsId).toggle(false);
+            $j( ':input:not(:button)', addOtherDrugsId).val([]);
+            $j('#' + removeOtherDrugsButtonId + '-addOtherDrugs').toggle(true); $j('#' + removeOtherDrugsButtonId + '-removeOtherDrugs').toggle(true);
+
+            return false;});
+
+        });
+      }
+    </script>
+
+    <script type="text/javascript">
+
+      if(jQuery){
+        jQuery(document).ready(function(){
+          if ( $j.browser.msie ) {
+            $j(":checkbox").click(function(){
+              $j(this).change();
+            });
+          }
+          $j(".enableDisable").each(function(){
+            var group = $j(this);
+            function disableFn(){
+              group.children("#disabled").fadeTo(250,0.33);
+              group.children("#disabled").find(":checkbox").attr("checked",false); //uncheck
+              group.children("#disabled").find("input[type$='text']").val("");
+              group.children("#disabled").find("input").attr("disabled",true);  //disable
+            }
+            function enableFn(){
+              group.children("#disabled").fadeTo(250,1);
+              group.children("#disabled").find("input").attr("disabled",false);
+            }
+            disableFn();
+            $j(this).children("#trigger").find(":checkbox:first").change(function(){
+              var checked = $j(this).attr("checked");
+              if(checked == true){
+                enableFn();
+              }else{
+                disableFn();
+              }
+            });
+          });
+
+
+          $j(".checkboxGroup").each(function(){
+            var group = $j(this);
+            var uncheckAll = function(){
+              group.find("input[type$='checkbox']").attr("checked",false);
+              group.find("input[type$='checkbox']").change();
+            }
+            var uncheckRadioAndAll = function(){
+              group.find("#checkboxAll,#checkboxRadio").find("input[type$='checkbox']").attr("checked",false);
+              group.find("#checkboxAll,#checkboxRadio").find("input[type$='checkbox']").change();
+            }
+
+
+            group.find("#checkboxAll").find("input").click(
+              /*  This was tricky... A number of things needed to happen
+               Basically, This is supposed to treat a group of inputs as if
+               were all one big checkbox. It is designed so that a checkbox
+               can be next to an input, and the user clicks the input, the
+               checkbox checks as well. But, when the user clicks the checkbox,
+               the browser marks the checkbox as checked. Therefore, when we check
+               if the checkbox is already checked, it always respondes true...
+               We needed to have 2 cases: when the clicking action is on the first checkbox
+               and when the action is on any other.  */
+              function(){
+                var flip;
+                var checked = $j(this).siblings(":checkbox:first").attr("checked");
+                if($j(this).attr("name") == $j(this).parents("#checkboxAll:first").find(":checkbox:first").attr("name")){
+                  checked = $j(this).attr("checked");
+                  flip = checked;
+                }else{
+                  flip = !checked;
+                }
+                if($j(this).attr("type") == "text") if(flip == false) flip = !filp; // this is so the user doesn't go to check the checkbox, then uncheck it when they hit the input.
+                uncheckAll();
+                $j(this).parents("#checkboxAll:first").find(":checkbox").attr("checked",flip);
+                $j(this).parents("#checkboxAll:first").find(":checkbox").change();
+              }
+            );
+
+
+
+            group.find("#checkboxRadio").find("input[type$='checkbox']").click(function(){
+              uncheckAll();
+              $j(this).siblings("input[type$='checkbox']").attr("checked",false);
+              $j(this).attr("checked",true);
+              $j(this).change();
+            });
+
+            group.find("#checkboxCheckbox").click(
+              function(){
+                uncheckRadioAndAll();
+              }
+            );
+
+
+          });
+        });
+      }
+    </script>
+
+    <script type="text/javascript">
+      $j(function() {
+        $j('#hospsincelastvisit').change(function() {
+          // conditionalFieldDisplay('hospsincelastvisit',true,'hospsincelastvisitDisgnosis','true','show');
+
+          if(getValue('hospsincelastvisit.value')){
+            var t=getValue('hospsincelastvisit.value');
+            if(t=='true'){
+              enableHtmlElements('hospsincelastvisitDisgnosis');
+            }
+            else{
+              disableHtmlElements('hospsincelastvisitDisgnosis',true);
+            }
+          }
+        });
+      });
+
+      //-------------------------------------------------******************
+
+
+
+      //14f and 23a: If “None” is selected on 14f, then only “None” “Start” may be selected for 23a
+      $j(function() {
+        $j('#pcpPlan').change(function() {
+// when none is selected
+          var pcPlan=getValue('pcpPlan.value');
+
+          if(getValue('pcpprophcurr.value')==1107){
+            if((pcPlan==1107)||(pcPlan==1256)){
+              //do nothing
+              errorMessage['pcpPlan.error1']='';
+              getField('pcpPlan.error').html('').hide();
+            }
+            else{
+
+              getField('pcpPlan.error').html('Only None or Start may be selected').show();
+              errorMessage['pcpPlan.error1']='Only None or Start may be selected';
+            }
+          }
+//14f and 23a: If “Septrin” or “Dapsone” is selected on 14f, then only “Continue,” “Stop,” or “Change Regimen” may be selected for 23a
+          if((getValue('pcpprophcurr.value')==916)||(getValue('pcpprophcurr.value')==92)){
+            if((pcPlan==1259)||(pcPlan==1260)||(pcPlan==1257)){
+              //clear error messages
+              errorMessage['pcpPlan.error']='';
+              getField('pcpPlan.error').html('').hide();
+            }
+            else{
+
+              errorMessage['pcpPlan.error']='Only Continue,Stop or Change Regimen may be selected';
+              getField('pcpPlan.error').html('Only Continue,Stop or Change Regimen may be selected').show();
+            }
+          }
+
+//23a and 23b: If “None,” “Start,” or “Continue” is selected on 23a, then skip 23b.
+          conditionalFieldDisplay('pcpPlan','1107,1256,1257','pcpstopreason','true','hide');
+
+//23a and 23c: If “Stop” or “Change regimen” is selected on 23a, then skip 23c.
+          conditionalFieldDisplay('pcpPlan','1260,1259','pcpMed','true','hide');
+
+//toxicity
+          conditionalFieldDisplay('pcpPlan','1260,1259','pcpstopreasonTox,pcpstopreason,pcpstopreasonSpecify','true','show');
+
+          conditionalFieldDisplay('pcpPlan','1256,1257,1259','pcpMed','true','show');
+
+        });
+      });
+
+
+      //Add other if reason is not toxicity
+      $j(function() {
+        $j('#pcpstopreason').change(function() {
+          conditionalFieldDisplay('pcpstopreason',5622,'pcpstopreasonSpecify','true','show');
+
+          conditionalFieldDisplay('pcpstopreason',102,'pcpstopreasonTox','true','show');
+        });
+      });
+
+      //14.g and 23d: If “None” is selected on 14g, then only “None” “Start” may be selected for 23d.
+      $j(function() {
+        $j('#tbprophPlan').change(function() {
+// when none is selected
+          var tbprophPlan=getValue('tbprophPlan.value');
+          if(getValue('tbprophcurr.value')==1107){
+            if((tbprophPlan==1107)||(tbprophPlan==1256)){
+              //do nothing
+              errorMessage['tbprophPlan.error1']='';
+              getField('tbprophPlan.error').html('').hide();
+            }
+            else{
+              errorMessage['tbprophPlan.error1']='Only None or Start may be selected';
+              getField('tbprophPlan.error').html('Only None or Start may be selected').show();
+            }
+
+            if(getValue('tbprophcurr.value')==''){
+              errorMessage['tbprophPlan.error3']='Current TB Prophylaxis plan not selected';
+              getField('tbprophPlan.error').html('Current TB Prophylaxis plan not selected').show();
+            }
+          }
+// 14g and 23d: If “Isoniazid” is selected on 14g, then only “Continue,” “Stop,” or “Change Regimen” may be selected for 23d.
+          if(getValue('tbprophcurr.value')==656){
+            if((tbprophPlan==1259)||(tbprophPlan==1260)||(tbprophPlan==1257)){
+              //do nothing
+              errorMessage['tbprophPlan.error2']='';
+              getField('tbprophPlan.error').html('').hide();
+            }
+            else{
+              errorMessage['tbprophPlan.error2']='Only None or Start may be selected';
+              getField('tbprophPlan.error').html('Only Continue,Stop or Change Regimen may be selected').show();
+
+
+            }
+          }
+
+//23d and 23e: If “None,” “Start,” “Continue,” or “Change regiment” is selected on 23d, then skip 23e.
+          conditionalFieldDisplay('tbprophPlan','1107,1256,1257,1259','tbprophstopreason,tbprophstopreasonSpecify','true','hide');
+
+//If plan is not STOP, disable this question
+          //conditionalFieldDisplay('tbprophPlan','1259,1260','tbprophstopreason,tbprophstopreasonSpecify','true','show');
+//TB Toxicity
+          conditionalFieldDisplay('tbprophPlan','1259,1260','tbprophstopreasonTox,tbprophstopreason,tbprophstopreasonSpecify','true','show');
+
+        });
+      });
+
+      //20a:Genital ulcers- If “Yes” is selected, then No should be disabled
+      $j(function() {
+        $j('#genitalReview').change(function() {
+          // when Yes is selected
+          conditionalFieldDisplay('genitalReview',864,'genitalNegative','true','hide');
+
+        });
+      });
+
+      //20a:Genital ulcers- If “No” is selected, then Yes should be disabled
+      $j(function() {
+        $j('#genitalNegative').change(function() {
+          // when Yes is selected
+          conditionalFieldDisplay('genitalNegative',864,'genitalReview','true','hide');
+
+        });
+      });
+
+      //20b:Urethral Discharge- If “Yes” is selected, then No should be disabled
+      $j(function() {
+        $j('#urethralReview').change(function() {
+          // when Yes is selected
+          conditionalFieldDisplay('urethralReview',5995,'urethralNegative','true','hide');
+
+        });
+      });
+
+      //20b:Urethral Discharge- If “No” is selected, then Yes should be disabled
+      $j(function() {
+        $j('#urethralNegative').change(function() {
+          // when Yes is selected
+          conditionalFieldDisplay('urethralNegative',5995,'urethralReview','true','hide');
+
+        });
+      });
+
+      //20c:Vaginal Discharge- If “Yes” is selected, then No should be disabled
+      $j(function() {
+        $j('#vaginalReview').change(function() {
+          // when Yes is selected
+          conditionalFieldDisplay('vaginalReview',5993,'vaginalNegative','true','hide');
+
+        });
+      });
+
+      //20c:Vaginal Discharge- If “No” is selected, then Yes should be disabled
+      $j(function() {
+        $j('#vaginalNegative').change(function() {
+          // when Yes is selected
+          conditionalFieldDisplay('vaginalNegative',5993,'vaginalReview','true','hide');
+
+        });
+      });
+      //14 h: If “None” is selected, then skip 14i and 14j.
+      $j(function() {
+        $j('#tbcurr').change(function() {
+          // when none is selected
+          conditionalFieldDisplay('tbcurr',1107,'tbcurrmedspickup,tbstartDate,tbcurrOther,tbadhere,tbadhereReason','true','hide');
+          // Hide drugs add rule to clear responses in I and j when this concept is blank XXXX
+        });
+      });
+
+      //if TB treatment is Completed then show TB Completed Date
+      $j(function() {
+        $j('#tbstopreason').change(function() {
+          conditionalFieldDisplay('tbstopreason',1267,'tbCompletedDate','true','show');
+
+//disable drug entry against completed
+          conditionalFieldDisplay('tbcurrCompleted',1267,'tbCurrentDrugRows,tbcurrYes,tbcurrOther','true','hide')
+
+        });
+      });
+
+      //Add text box if tbcurrOther is selected
+      $j(function() {
+        $j('#tbcurrOther').change(function() {
+          //  conditionalFieldDisplay('tbcurrOther',5622,'w238','true','show');
+        });
+      });
+
+      //For all the drugs, disable the quantities if that specific drug is blank
+      //TODO find
+
+      $j(function() {
+        $j('#cryptPlan').change(function() {
+// 14k and 23f: If “None” is selected for 14k, then only “None” or “Start Fluconazole” may be selected for 23f.
+          var cryTPlan=getValue('cryptPlan.value');
+
+          if(getValue('cryptocurr.value')==1107){
+
+            if((cryTPlan==1107)||(cryTPlan==1256)){
+              //do nothing
+
+              errorMessage['cryptPlan.error1']='';
+              getField('cryptPlan.error').html('').hide();
+            }
+            else{
+
+              getField('cryptPlan.error').html('Only None or Start Fluconazole may be selected').show();
+              errorMessage['cryptPlan.error1']='Only None or Start Fluconazole may be selected';
+
+            }
+          }
+
+// 14k and 23f: If “Fluconazole 200mg” is selected for 14k, then only “Continue Fluconazole” or “Stop Fluconazole” may be selected for 23f.
+          if(getValue('cryptocurr.value')==747){
+            if((cryTPlan==1257)||(cryTPlan==1260)){
+              //do nothing
+              errorMessage['cryptPlan.error2']='';
+              getField('cryptPlan.error').html('').hide();
+            }
+            else{
+
+              getField('cryptPlan.error').html('Only Continue Fluconazole or Stop Fluconazole may be selected').show();
+              errorMessage['cryptPlan.error2']='Only Continue Fluconazole or Stop Fluconazole may be selected'
+
+            }
+          }
+
+//toxicity cryptPlan
+//NO toxicity option provided
+        });
+      });
+
+      //16a: 16b can only be answered if 16a is answered “YES”. TODO currSideeff=1065 then add ID for b id="currSideEffB"
+      $j(function() {
+        $j('#currSideeff').change(function() {
+          conditionalFieldDisplay('currSideeff',1065,'toxicitySideEffectDrugs,toxicitySideEffects,seReaction,seSeverity','true','show');
+          conditionalFieldDisplay('currSideeff',1065,'1-addtoxicityDrug','false','show');
+
+        });
+      });
+
+
+
+
+
+
+
+
+      //15a and 22a: If “No” is selected on 15a, then only “None” “Start” "Restart" may be selected for 22a
+      $j(function() {
+        $j('#arvPlan').change(function() {
+// when no is selected
+          var arvPlan=getValue('arvPlan.value');
+          var currMed=getValue('currmedArvs.value');
+
+
+
+          if(currMed=='false'){
+
+            if((arvPlan==1107)||(arvPlan==1256)||(arvPlan==1850)){
+              //do nothing
+              errorMessage['arvPlan.error1']='';
+              getField('arvPlan.error').html('').hide();
+
+            }
+            else{
+
+              getField('arvPlan.error').html('Only None or Start may be selected').show();
+              errorMessage['arvPlan.error1']='Only None or Start may be selected';
+            }
+          }
+
+//15a and 22a: If “yes” is selected in 15a, then only “Continue,” “Stop,” or “Change Regimen” or "Change Formulation" or "Drug Substitution" or "Change Dose" may be selected for 22a
+          if((getValue('currmedArvs.value')=='true')){
+            if((arvPlan==1257)||(arvPlan==1260)||(arvPlan==1259)||(arvPlan==1258)||(arvPlan==1849)||(arvPlan==981)){
+              //clear error messages
+              errorMessage['arvPlan.error']='';
+              getField('arvPlan.error').html('').hide();
+            }
+            else{
+
+              errorMessage['arvPlan.error']='Only Continue,Stop or Change Regimen may be selected';
+              getField('arvPlan.error').html('Only Continue,Stop or Change Regimen may be selected').show();
+            }
+          }
+
+          //if Not on ARVs Hide arv start reason arv stop reason
+          //--------------------------
+          conditionalFieldDisplay('arvPlan','1256','arvstartreason','false','show');
+          conditionalFieldDisplay('arvPlan','1260,1849,981,1259,1850,1258','arvstopreason,arvstopreasonTox,arvstopreasonSpecify','false','show');
+          conditionalFieldDisplay('arvPlan','1107,1257,1260','arvDrugRows','false','hide');
+          conditionalFieldDisplay('arvPlan','1107','arveligible,arveligibleSpecify','false','show');
+
+
+//,1849,981,1259,1850,1258
+
+//-----------------------
+        });
+      });
+      //Reason
+      $j(function() {
+        $j('#arvstopreasonTox').change(function() {
+
+          conditionalFieldDisplay('arvstopreasonTox',5622,'arvstopreasonSpecify','false','show');
+
+//-----------------------
+        });
+      });
+
+
+      //24a: If “Start Induction” is selected, then skip 24b.
+      $j(function() {
+        $j('#tbPlan').change(function() {
+
+//15a and 24a: If “Yes” is selected in 15a, then only “Continue,” “Stop,” or “Change Regimen” or "Change Formulation" or "Drug Substitution" or "Change Dose" may be selected for 24a
+          var tbPlan=getValue('tbPlan.value');
+          var tbcurr=getValue('tbcurr.value');
+          var tbcurrYes=getValue('tbcurrYes.value');
+
+          if (tbcurrYes==1065){
+            if((tbPlan==1257)||(tbPlan==1260)||(tbPlan==1259)||(tbPlan==1258)||(tbPlan==1849)||(tbPlan==981)){
+              //clear error messages
+              errorMessage['tbPlan.error']='';
+              getField('tbPlan.error').html('').hide();
+            }
+            else{
+
+              errorMessage['tbPlan.error']='Only Continue,Stop or Change Regimen may be selected';
+              getField('tbPlan.error').html('Only Continue,Stop or Change Regimen may be selected').show();
+            }
+          }
+//15a and 24a: If “None” is selected in 15a, then only “None,” and  “Start,” may be selected for 24a
+          if (tbcurr==1107){
+            if((tbPlan==1107)||(tbPlan==1256)){
+              //clear error messages
+              errorMessage['tbPlan.error']='';
+              getField('tbPlan.error').html('').hide();
+            }
+            else{
+
+              errorMessage['tbPlan.error']='Only None or start may be selected';
+              getField('tbPlan.error').html('Only None or start may be selected').show();
+            }
+          }
+
+          //24a: If “Start Induction” is selected, then skip 24b.
+          conditionalFieldDisplay('tbPlan',1256,'tbstopreason,tbstopreasonSpecify','true','hide');
+          //show start date if on tb treatment
+          //tbPlan 1259, 1257,1849, 981 tbstartDatePlan tbpickupLocation
+          conditionalFieldDisplay('tbPlan','1256,1259,1257,1849,981','tbstartDatePlan,tbpickupLocation','true','show');
+          //24a: If “Change to Continuation,” “Continue Regimen,” “Substitution,” “Re-dose,” or “Stop” is selected, then skip 24a.
+          //24a: If plan is not stop, change, redoes disable this question.
+          //conditionalFieldDisplay('tbPlan','1259,1257,1849,981,1260','tbstopreasonTox,tbstopreason,tbstopreasonSpecify','true','show');
+          conditionalFieldDisplay('tbPlan','981,1260,1259','tbstopreason,tbstopreasonTox,tbstopreasonSpecify','true','show');
+
+//tbDrugRows,tbcurrOther
+          conditionalFieldDisplay('tbPlan','981,1256,1260,1259','tbPlanDrugs,tbcurrOther','false','show');
+//"tbPlanDrugs"> tbDrugRows
+        });
+      });
+
+
+      $j(function() {
+        $j('#tbstopreason').change(function() {
+          conditionalFieldDisplay('tbstopreason',5622,'tbstopreasonSpecify','true','show');
+          conditionalFieldDisplay('tbstopreason',102,'tbstopreasonTox','true','show');
+        });
+      });
+
+      $j(function() {
+        $j('#tbcurrRhze').change(function() {
+          // disableHtmlElements('tbplanRhzeCustom')
+        });
+      });
+
+      //Hide date if scheduled visit
+      $j(function() {
+        $j('#visittype').change(function() {
+          conditionalFieldDisplay('visittype',1246,'scheduledDate','true','hide');
+        });
+      });
+
+      //Control on TB treatment options
+      $j(function() {
+        $j('#tbcurr').change(function() {
+          if(getValue('tbcurr.value')==1107){
+            setValue('tbcurrYes.value','');
+            getField('tbcurrYes.value').change();
+            // current tb medications
+            disableHtmlElements('tbCurrentDrugRows,tbcurrOther','false');
+          }
+        });
+      });
+
+      $j(function() {
+        $j('#tbcurrYes').change(function() {
+          if(getValue('tbcurrYes.value')==1065){
+            setValue('tbcurr.value','');
+            getField('tbcurr.value').change();
+//enable current tb medications
+            enableHtmlElements('tbCurrentDrugRows,tbcurrOther');
+//1065
+//tbstartDate tbpickupLocation
+//enableHtmlElements('tbDrugsRow1,tbDrugsRow2,tbDrugsRow3');
+// conditionalFieldDisplay('tbcurrYes',1065,'tbstartDate,tbpickupLocation','true','show');
+
+          }
+        });
+      });
+
+      //add span deliveredMsg
+      $j(function() {
+        $j('#delivered').change(function() {
+          if(getValue('delivered.value')){
+            var t=getValue('delivered.value');
+            if(t=='true'){
+              enableHtmlElements('deliveredMsg');
+              $j('#deliveredMsg').css('background-color','White');
+            }
+            else{
+              disableHtmlElements('deliveredMsg','false');
+            }
+          }
+        });
+      });
+
+      $j(function() {
+        $j('#fp').change(function() {
+          conditionalFieldDisplay('fp',1065,'fpgroup','false','show');
+          conditionalFieldDisplay('fp',1066,'notfpreson','true','show');
+        });
+      });
+      //ARVs Logic
+      $j(function() {
+        $j('#currmedArvs').change(function() {
+          fieldsRows="arvstartdatesincelast,currmedtreamentcate,changedrug,arvadhere,arvadhereReason";
+          drugRows="arvDrugs1";
+
+          if(getValue('currmedArvs.value')){
+            var t=getValue('currmedArvs.value');
+            if(t=='true'){
+              enableHtmlElements(fieldsRows);
+              enableHtmlElements(drugRows);
+
+            }
+            else{
+              disableHtmlElements(fieldsRows,'true');
+              disableHtmlElements(drugRows,'false');
+
+
+            }
+          }
+        });
+      });
+
+      //PCP prophylaxis Logic
+      $j(function() {
+        $j('#pcpprophcurr').change(function() {
+          fieldsRows="pcpprophadhere,pcpprophadhereReason";
+
+
+          if(getValue('pcpprophcurr.value')){
+            var t=getValue('pcpprophcurr.value');
+            if((t=='916')||(t=='92')){
+              enableHtmlElements(fieldsRows);
+
+
+            }
+            else{
+              disableHtmlElements(fieldsRows,'true');
+
+
+
+            }
+          }
+        });
+      });
+
+      //TB prophylaxis Logic
+      $j(function() {
+        $j('#tbprophcurr').change(function() {
+          fieldsRows="tbprophadhere,tbprophadhereReason";
+
+
+          if(getValue('tbprophcurr.value')){
+            var t=getValue('tbprophcurr.value');
+            if(t=='656'){
+              enableHtmlElements(fieldsRows);
+
+
+            }
+            else{
+              disableHtmlElements(fieldsRows,'true');
+
+
+
+            }
+          }
+        });
+      });
+
+
+      //22 a
+      //ARVs Logic
+
+
+      $j(function() {
+        $j('#arveligible').change(function() {
+          conditionalFieldDisplay('arveligible',5622,'arveligibleSpecify','false','show');
+
+        });
+      });
+
+      $j(function() {
+        $j('#tbsympNone').change(function() {
+          conditionalFieldDisplay('tbsympNone',1107,'tbsymptoms','false','hide');
+
+        });
+      });
+
+
+
+      $j(function() {
+        $j('#transAmpath').change(function() {
+          conditionalFieldDisplay('transAmpath',1286,'transferOutLocation','false','show');
+          conditionalFieldDisplay('transAmpath',1286,'transferout','false','hide');
+          if(getValue('transAmpath.value')==1286)
+            setValue('transNonampath.value','');
+
+        });
+      });
+
+      $j(function() {
+        $j('#transNonampath').change(function() {
+          conditionalFieldDisplay('transNonampath',1287,'transferOutLocation','false','hide');
+          conditionalFieldDisplay('transNonampath',1287,'transferout','false','show');
+          if(getValue('transNonampath.value')==1287)
+            setValue('transAmpath.value','');
+
+        });
+      });
+
+
+      $j(function() {
+        $j('#arvadhere').change(function() {
+          conditionalFieldDisplay('arvadhere',6343,'arvadhereReason','false','hide');
+
+        });
+      });
+      //Other specify for ARV adherence
+      $j(function() {
+        $j('#arvadhereOther').change(function() {
+          conditionalFieldDisplay('arvadhereOther',5622,'arvadhereSpecify','true','show');
+
+        });
+      });
+
+      $j(function() {
+        $j('#pcpprophadhere').change(function() {
+          conditionalFieldDisplay('pcpprophadhere',6343,'pcpprophadhereReason','false','hide');
+
+        });
+      });
+
+
+      //Other specify for PCP Proph adherence
+      $j(function() {
+        $j('#pcpprophadhereOther').change(function() {
+          conditionalFieldDisplay('pcpprophadhereOther',5622,'pcpprophadhereSpecify','true','show');
+
+        });
+
+      });
+
+      $j(function() {
+        $j('#tbprophadhere').change(function() {
+          conditionalFieldDisplay('tbprophadhere',6343,'tbprophadhereReason','false','hide');
+
+        });
+      });
+
+      //Other specify for TB Proph adherence
+      $j(function() {
+        $j('#tbprophadhereOther').change(function() {
+          conditionalFieldDisplay('tbprophadhereOther',5622,'tbprophadhereSpecify','true','show');
+
+        });
+      });
+
+      $j(function() {
+        $j('#tbadhere').change(function() {
+          conditionalFieldDisplay('tbadhere',6343,'tbadhereReason','false','hide');
+
+        });
+      });
+
+      //Other specify for TB adherence
+      $j(function() {
+        $j('#tbadhereOther').change(function() {
+          conditionalFieldDisplay('tbadhereOther',5622,'tbadhereSpecify','true','show');
+
+        });
+      });
+
+      //Tests Ordered
+      $j(function() {
+        $j('#testNone').change(function() {
+          conditionalFieldDisplay('testNone',1107,'testsord','false','hide');
+
+        });
+      });
+
+      //Referrals Ordered
+      $j(function() {
+        $j('#refNone').change(function() {
+          conditionalFieldDisplay('refNone',1107,'reford','false','hide');
+
+        });
+      });
+
+      //Encounter Date
+      $j(function() {
+        $j('#encounterDate').change(function() {
+          var currentDate=formatCurrentDate();
+          var encounterDate=getValue('encounterDate.value');
+
+          if (encounterDate >currentDate) {
+
+            getField('encounterDate.error').html('Encounter Date should not be greater than today').show();
+            errorMessage['encounterDate.error']='Encounter Date should not be greater than today'
+          }else{
+            getField('encounterDate.error').html('').hide();
+            errorMessage['encounterDate.error']='';
+          }
+
+        });
+      });
+
+      //PlatelatesTestDate
+      $j(function() {
+        $j('#testresultPlatelets').change(function() {
+          var testresultPlateletss=getValue('testresultPlatelets.value');
+          var encounterDate=getValue('encounterDate.value');
+          if (testresultPlatelets>encounterDate) {
+            getField('testresultPlatelets.error').html('Test date cannot be greater than the encounter date').show();
+            errorMessage['testresultPlatelets.error']='Test start date cannot be greater than the encounter date'
+          }else{
+            getField('testresultPlatelets.error').html('').hide();
+            errorMessage['testresultPlatelets.error']='';
+          }
+
+        });
+      });
+
+      //LMP
+      $j(function() {
+        $j('#lmp').change(function() {
+          var currentDate=formatCurrentDate();
+          var lmp=getValue('lmp.value');
+          var encounterDate=getValue('encounterDate.value')
+
+          if (lmp>currentDate) {
+
+            getField('lmp.error').html('LMP Date should not be greater than today').show();
+            errorMessage['lmp.error']='LMP Date should not be greater than today'
+          }else{
+            getField('lmp.error').html('').hide();
+            errorMessage['lmp.error']='';
+            if (lmp>encounterDate) {
+
+              getField('lmp.error').html('LMP Date should not be greater than encounter Date').show();
+              errorMessage['lmp.error1']='LMP Date should not be greater than encounter Date'
+            }else{
+              getField('lmp.error').html('').hide();
+              errorMessage['lmp.error1']='';
+            }
+          }
+
+
+
+        });
+      });
+
+      //RTC
+      $j(function() {
+        $j('#rtc').change(function() {
+          var rtc=getValue('rtc.value');
+          var encounterDate=getValue('encounterDate.value');
+          if (encounterDate >rtc ) {
+            getField('rtc.error').html('RTC should not be before the encounter date').show();
+            errorMessage['rtc.error']='RTC should not be before the encounter date'
+          }else{
+            getField('rtc.error').html('').hide();
+            errorMessage['rtc.error']='';
+          }
+
+        });
+      });
+
+      //ARV start date
+      $j(function() {
+        $j('#arvstartdatesincelast').change(function() {
+          var arvstartdatesincelast=getValue('arvstartdatesincelast.value');
+          var encounterDate=getValue('encounterDate.value');
+          if (arvstartdatesincelast>encounterDate) {
+            getField('arvstartdatesincelast.error').html('ARV start date since last visit cannot be greater than the encounter date').show();
+            errorMessage['arvstartdatesincelast.error']='ARV start date since last visit cannot be greater than the encounter date'
+          }else{
+            getField('arvstartdatesincelast.error').html('').hide();
+            errorMessage['arvstartdatesincelast.error']='';
+          }
+
+        });
+      });
+
+
+      //TB start date
+      $j(function() {
+        $j('#tbstartDate').change(function() {
+          var tbstartDate=getValue('tbstartDate.value');
+          var encounterDate=getValue('encounterDate.value');
+          autoFillField('tbstartDatePlan','tbstartDate')
+          if (tbstartDate>encounterDate) {
+            getField('tbstartDate.error').html('TB start date since last visit cannot be greater than the encounter date').show();
+            errorMessage['tbstartDate.error']='TB start date since last visit cannot be greater than the encounter date'
+          }else{
+            getField('tbstartDate.error').html('').hide();
+            errorMessage['tbstartDate.error']='';
+          }
+
+        });
+      });
+
+
+      //TB completed date
+      $j(function() {
+        $j('#tbCompletedDate').change(function() {
+          var tbCompletedDate=getValue('tbCompletedDate.value');
+          var encounterDate=getValue('encounterDate.value');
+          if (tbCompletedDate>encounterDate) {
+            getField('tbCompletedDate.error').html('TB completed date cannot be greater than the encounter date').show();
+            errorMessage['tbCompletedDate.error']='TB completed date cannot be greater than the encounter date'
+          }else{
+            getField('tbCompletedDate.error').html('').hide();
+            errorMessage['tbCompletedDate.error']='';
+          }
+
+        });
+      });
+
+
+    </script>
+
+    <script type="text/javascript">
+      beforeSubmit.push(function() {
+        var valRequired = requiredFields('encounterDate,encounterLocation,encounterProvider');
+        var valErrors =fieldErrorMessages();
+        if ((valRequired ==1) ||(valErrors ==1)){
+          return false;
+        }
+
+        return true;
+      });
+
+      //BMI Calculations
+      $j(function() {
+        $j('#height').change(function() {
+          var height=getValue('height.value');
+          var weight=getValue('weight.value');
+          if(weight > 0){
+            if(height > 0){
+              var finalBmi = weight/(height/100*height/100)
+              setValue('bmiField.value',finalBmi);
+            }
+          }
+
+        });
+      });
+
+      //Weight change
+      $j(function() {
+        $j('#weight').change(function() {
+          var height=getValue('height.value');
+          var weight=getValue('weight.value');
+          if(weight > 0){
+            if(height > 0){
+              var finalBmi = weight/(height/100*height/100)
+              setValue('bmiField.value',finalBmi);
+            }
+          }
+
+        });
+      });
+
+      //WHO Stage
+      function whoStageSymptoms(stage){
+
+//Symptoms stage
+        var stageOne =
+        {"5327": "ASYMPTOMATIC HIV INFECTION",
+          "5328": "HIV STAGING - PERSISTENT GENERALIZED LYMPHADENOPATHY"
+        };
+        var stageTwo =
+        {"5329":"HIV STAGING - ADULT HERPES ZOSTER",
+          "5330":"HIV STAGING - MINOR MUCOCUTANEOUS MANIFESTATIONS",
+          "5012":"HIV STAGING - RECURRENT UPPER RESPIRATORY INFECTION",
+          "5332":"HIV STAGING - WEIGHT LOSS LESS THAN TEN PERCENT",
+          "1441":"ANGULAR CHEILITIS",
+          "2091":"RECURRENT ORAL ULCERATION",
+          "1249":"PAPULAR PRURITIC ERUPTION",
+          "2092":"SEBORRHEIC DERMATITIS",
+          "2093":"FUNGAL NAIL INFECTIONS"};
+
+        var stageThree =
+        {"5334":"CANDIDIASIS, ORAL",
+          "5018":"DIARRHEA, CHRONIC",
+          "5027":"HIV STAGING - PERSISTENT FEVER",
+          "5030":"HIV STAGING - SERIOUS BACTERIAL INFECTIONS",
+          "5338":"HIV STAGING - TUBERCULOSIS WITHIN YEAR",
+          "5339":"HIV STAGING - WEIGHT LOSS GREATER THAN TEN PERCENT",
+          "5337":"ORAL HAIRY LEUKOPLAKIA",
+          "2094":"PRESUMPTIVE HIV STAGING - WEIGHT LOSS GREATER THAN TEN PERCEN",
+          "2095":"CONFIRMED HIV STAGING - WEIGHT LOSS GREATER THAN TEN PERCENT",
+          "2097":"PRESUMPTIVE HIV STAGING - DIARRHEA, CHRONIC",
+          "2096":"CONFIRMED HIV STAGING - DIARRHEA, CHRONIC",
+          "2098":"PRESUMPTIVE HIV STAGING - PERSISTENT CANDIDIASIS, ORAL",
+          "2099":"CONFIRMED HIV STAGING - PERSISTENT CANDIDIASIS, ORAL",
+          "2100":"PRESUMPTIVE HIV STAGING - PERSISTENT FEVER",
+          "2101":"CONFIRMED HIV STAGING - PERSISTENT FEVER",
+          "2102":"PRESUMPTIVE WHO STAGING - ORAL HAIRY LEUKOPLAKIA",
+          "2103":"CONFIRMED WHO STAGING - ORAL HAIRY LEUKOPLAKIA",
+          "2104":"PRESUMPTIVE HIV STAGING - TUBERCULOSIS, PULMONARY",
+          "2105":"CONFIRMED HIV STAGING - TUBERCULOSIS, PULMONARY",
+          "2106":"PRESUMPTIVE HIV STAGING - SEVERE BACTERIAL INFECTIONS",
+          "2107":"CONFIRMED HIV STAGING - SEVERE BACTERIAL INFECTIONS",
+          "2108":"PRESUMPTIVE HIV STAGING - UNEXPLAINED ANAEMIA, NEUTROPAENIA, AND/OR CHRONIC THROMBOCYTOPAENIA",
+          "2109":"CONFIRMED HIV STAGING - UNEXPLAINED ANAEMIA, NEUTROPAENIA, AND/OR CHRONIC THROMBOCYTOPAENIA",
+          "2110":"PRESUMPTIVE HIV STAGING - ACUTE NECROTIZING STOMATITIS, GINGIVITIS, OR PERIODONTITIS",
+          "2111":"CONFIRMED HIV STAGING - ACUTE NECROTIZING STOMATITIS, GINGIVITIS, OR PERIODONTITIS"
+        };
+
+        var stageFour =
+        {"5345":"ENCEPHALOPATHY",
+          "5340":"HIV STAGING - CANDIDIASIS, ORORESPIRATORY TRACT",
+          "5033":"HIV STAGING - CRYPTOCOCCOSIS, EXTRAPULMONARY",
+          "5034":"HIV STAGING - CRYPTOSPORIDIOSIS",
+          "5035":"HIV STAGING - CYTOMEGALOVIRUS DISEASE",
+          "5350":"HIV STAGING - DISSEMINATED ENDEMIC MYCOSIS",
+          "5041":"HIV STAGING - LYMPHOMA",
+          "5344":"HIV STAGING - MUCOCUTANEOUS HERPES SIMPLEX",
+          "5043":"HIV STAGING - MYCOBACTERIUM, OTHER",
+          "5354":"HIV STAGING - SALMONELLA SEPTICEMIA",
+          "507":"KAPOSI'S SARCOMA",
+          "5042":"MYCOBACTERIUM TUBERCULOSIS, EXTRAPULMONARY",
+          "882":"PNEUMOCYSTIC CARINII PNEUMONIA",
+          "5046":"PROGRESSIVE MULTIFOCAL LEUKOENCEPHALOPATHY",
+          "823":"WASTING SYNDROME",
+          "990":"TOXOPLASMOSIS, CENTRAL NERVOUS SYSTEM",
+          "2112":"PRESUMPTIVE HIV STAGING - HIV WASTING SYNDROME",
+          "2113":"CONFIRMED HIV STAGING - HIV WASTING SYNDROME",
+          "2114":"PRESUMPTIVE HIV STAGING - PNEUMOCYSTIC PNEUMONIA",
+          "2115":"CONFIRMED HIV STAGING - PNEUMOCYSTIC PNEUMONIA",
+          "2116":"PRESUMPTIVE HIV STAGING - RECURRENT SEVERE BACTERIAL PNEUMONIA",
+          "2117":"CONFIRMED HIV STAGING - RECURRENT SEVERE BACTERIAL PNEUMONIA",
+          "2118":"PRESUMPTIVE HIV STAGING - CHRONIC HERPES SIMPLEX",
+          "2119":"CONFIRMED HIV STAGING - CHRONIC HERPES SIMPLEX",
+          "2120":"PRESUMPTIVE HIV STAGING - CANDIDIASIS",
+          "2121":"CONFIRMED HIV STAGING - CANDIDIASIS",
+          "2122":"PRESUMPTIVE HIV STAGING - EXTRAPULMONARY TUBERCULOSIS",
+          "2123":"CONFIRMED HIV STAGING - EXTRAPULMONARY TUBERCULOSIS",
+          "2124":"PRESUMPTIVE HIV STAGING - KAPOSI'S SARCOMA  (KS)",
+          "2125":"CONFIRMED HIV STAGING - KAPOSI'S SARCOMA (KS)",
+          "2126":"PRESUMPTIVE HIV STAGING - CYTOMEGALOVIRUS DISEASE",
+          "2127":"CONFIRMED HIV STAGING - CYTOMEGALOVIRUS DISEASE",
+          "2128":"PRESUMPTIVE HIV STAGING - TOXOPLASMOSIS, CNS",
+          "2129":"CONFIRMED HIV STAGING - TOXOPLASMOSIS, CNS",
+          "2130":"PRESUMPTIVE HIV STAGING - HIV ENCEPHALOPATHY",
+          "2131":"CONFIRMED HIV STAGING - HIV ENCEPHALOPATHY",
+          "2132":"PRESUMPTIVE HIV STAGING - CRYPTOCOCCOSIS, EXTRAPULMONARY",
+          "2133":"CONFIRMED HIV STAGING - CRYPTOCOCCOSIS, EXTRAPULMONARY",
+          "2134":"PRESUMPTIVE HIV STAGING - DISSEMINATED NON-TUBERCULOSIS MYCOBACTERIAL INFECTION",
+          "2135":"CONFIRMED HIV STAGING - DISSEMINATED NON-TUBERCULOSIS MYCOBACTERIAL INFECTION",
+          "2136":"PRESUMPTIVE HIV STAGING - PROGRESSIVE MULTIFOCAL LEUKOENCEPHALOPATHY",
+          "2137":"CONFIRMED HIV STAGING - PROGRESSIVE MULTIFOCAL LEUKOENCEPHALOPATHY",
+          "2138":"PRESUMPTIVE HIV STAGING - CHRONIC CRYPTOSPORIDIOSIS",
+          "2139":"CONFIRMED HIV STAGING - CHRONIC CRYPTOSPORIDIOSIS",
+          "2140":"PRESUMPTIVE HIV STAGING - CHRONIC ISOSPORIASIS",
+          "2141":"CONFIRMED HIV STAGING - CHRONIC ISOSPORIASIS",
+          "2142":"PRESUMPTIVE HIV STAGING - DISSEMINATED MYCOSIS",
+          "2143":"CONFIRMED HIV STAGING - DISSEMINATED MYCOSIS",
+          "2144":"PRESUMPTIVE HIV STAGING - RECURRENT SEPTICEMIA",
+          "2145":"CONFIRMED HIV STAGING - RECURRENT SEPTICEMIA",
+          "2146":"PRESUMPTIVE HIV STAGING - LYMPHOMA",
+          "2147":"CONFIRMED HIV STAGING - LYMPHOMA",
+          "2148":"PRESUMPTIVE HIV STAGING - INVASIVE CERVICAL CARCINOMA",
+          "2149":"CONFIRMED HIV STAGING - INVASIVE CERVICAL CARCINOMA",
+          "2150":"PRESUMPTIVE HIV STAGING - ATYPICAL DISSEMINATED LEISHMANIASIS",
+          "2151":"CONFIRMED HIV STAGING - ATYPICAL DISSEMINATED LEISHMANIASIS",
+          "2152":"PRESUMPTIVE HIV STAGING - SYMPTOMATIC HIV-ASSOCIATED NEPHROPATHY OR CARDIOMYOPATHY",
+          "2153":"CONFIRMED HIV STAGING - SYMPTOMATIC HIV-ASSOCIATED NEPHROPATHY OR CARDIOMYOPATHY"};
+
+
+
+
+        var $jel = $j("#whoStageCriteria").find("select");
+        $jel.empty(); // remove old options
+        var stageOptions={};
+        if(stage==1204)
+          stageOptions=stageOne;
+        if(stage==1205)
+          stageOptions=stageTwo;
+        if(stage==1206)
+          stageOptions=stageThree;
+        if(stage==1207)
+          stageOptions=stageFour;
+
+        $j.each(stageOptions, function(value,key) {
+          $jel.append($j("<option></option>")
+            .attr("value", value).text(key));
+        });
+
+      }
+
+
+      $j(function() {
+        $j('#whoStage').change(function() {
+          var whoStage=getValue('whoStage.value');
+          whoStageSymptoms(whoStage);
+
+        });
+      });
+    </script>
+
+
+  </head>
+  <macros>
+    paperFormId = (Fill this in)
+    headerColor =#009d8e
+    fontOnHeaderColor = white
+  </macros>
+
+  <style type="text/css" media="screen">
+
+    table.standard, table.standard td{
+      border: 1px solid black;
+      border-collapse: collapse;
+      width:100%;
+    }
+
+    table.quartercolumn, table.quartercolumn td{
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+
+    table.quartercolumn td {
+      width: 25%;
+    }
+
+    table.fivecolumn, table.fivecolumn td{
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+
+
+
+    h4 {
+      display: inline;
+      font-weight: bold;
+    }
+
+
+    .section {
+      border: 1px solid black;
+      padding: 2px;
+      text-align: left;
+      margin-bottom: 1em;
+    }
+    .sectionHeader {
+      background-color:#0093AF;
+      color: $fontOnHeaderColor;
+      display: block;
+      padding: 2px;
+      font-weight: bold;
+    }
+    table.baseline-aligned td {
+      vertical-align: baseline;
+    }
+  </style>
+
+
+  <span style="float:right">Paper Form ID: $paperFormId</span>
+  <h2>AMPATH Adult Return HIV Encounter v6.09 </h2>
+  <section headerLabel="Patient demographics">
+    <table class="quartercolumn">
+
+      <tr>
+        <td colspan="2"><b>1. Name:</b><lookup class="value" expression="patient.personName"/>
+        </td>
+        <td colspan="2"><b>Encounter/Visit Date:<span class="required">*</span> </b><encounterDate  id="encounterDate" allowFutureDates="false"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2"><b>2a. AMRS Universal ID:</b><lookup class="value" complexExpression="#foreach( $patId in $patientIdentifiers.get('AMRS Universal ID') ) $patId #end "/></td>
+        <td colspan="2"><b>b. Unique patient ID (GOK):</b><lookup class="value" complexExpression="#foreach( $patId in $patientIdentifiers.get('CCC Number') ) $patId #end "/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2"><b>c. AMPATH ID:</b> <lookup class="value" complexExpression="#foreach( $patId in $patientIdentifiers.get('AMRS Medical Recored Number') ) $patId #end "/>
+        </td>
+        <td colspan="2"><b>d. TB Registration ID:</b><lookup class="value" expression="personAttributes.get('TB District Registration Number')"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4"><h4>3. Indicate patients contact phone number only if is changed since last visit:</h4>
+          <lookup class="value" expression="personAttributes.get('Contact Phone Number')"/>
+        </td>
+      </tr>
+      <tr>
+        <td  colspan="4"><h4>4. Patient covered by NHIF:</h4>
+          <obs conceptId="6266" id="nhif" answerConceptIds="6815, 1107" answerLabels="Yes, No"/>
+        </td>
+      </tr>
+    </table>
+  </section>
+
+
+  <section headerLabel="Location">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="2"><h4>5. Facility name (site/satellite clinic required):<span class="required">*</span></h4>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2"><encounterLocation type="autocomplete"/>
+        </td>
+      </tr>
+    </table>
+  </section>
+
+
+  <section headerLabel="Transfer details">
+    <table class="quartercolumn">
+      <obsgroup groupingConceptId="7016">
+        <tr>
+          <td colspan="4"><h4>6. Transfer in from other AMPATH clinic (specify):</h4>
+            <obs conceptId="1915" id="transferin" style="location"/>
+          </td>
+        </tr>
+      </obsgroup>
+    </table>
+  </section>
+
+
+  <section headerLabel="Visit type:">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="4"><h4>7a. Visit type:</h4>
+          <obs conceptId="1839" id="visittype" answerConceptIds="1246, 1837, 1838" answerLabels="Scheduled visit, Unscheduled Visit Early, Unscheduled Visit Late"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4"><h4>b. If unscheduled, actual scheduled date</h4>
+          <obs conceptId="7029" id="visitdate" class="scheduledDate" allowFutureDates="true"/>
+        </td>
+      </tr>
+    </table>
+  </section>
+
+
+  <section headerLabel="Civil status">
+    <table class="quartercolumn">
+      <tr>
+        <td  colspan="4"><h4>8. Marital Status:<i>(Fill if there is change since last visit)</i></h4>
+          <obs conceptId="1054" id="maritalstatus" answerConceptIds="1060,1058,5555,  6290,  1056, 1057, 1059" answerLabels="Cohabiting,Divorced,Married monogamous,   Married polygamous,Separated,Single,Widowed"/>
+        </td>
+      </tr>
+      <tr>
+        <td  colspan="4"><h4>9. Discordant couple:</h4>
+          <obs conceptId="6096" id="discouple" answerConceptIds="1065, 1066, 1067,1175" answerLabels="Yes, No, Unknown,N/A"/>
+        </td>
+      </tr>
+
+    </table>
+  </section>
+
+
+  <section headerLabel="PWPs">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="4"><h4>10. Prevention With Positives (PWPs)</h4>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4"><h4>a. At risk population:</h4>
+          <obs conceptId="6578" id="atriskpop" answerConceptIds="8290,1832,6096,105,8291,1175" answerLabels="Client of sex worker,Commercial sex worker,Discordant couple,IV drug use,MSM,N/A"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4"><h4>b. PWP services:</h4>
+          <obs conceptId="8302"  id="pwpservices" answerConceptIds="8305,8303,8306,8304,1175"   answerLabels="Condom promotion/provision,Couple counseling,Needle exchange,Targeted risk reduction,N/A"/>
+        </td>
+      </tr>
+
+    </table>
+
+  </section>
+
+  <section headerLabel="Past medical/Social history">
+    <table class="quartercolumn">
+
+      <obsgroup groupingConceptId="1852">
+        <tr>
+          <td colspan="3"><h4>11a. Has patient been Hospitalized since last visit:</h4>
+            <obs conceptId="976" id="hospsincelastvisit" style="yes_no"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="4"><h4>b. If yes, reason for hospitalization:</h4>
+            <repeat>
+              <template>
+                <div id="{n}-togglePrevhospdiag" style="display:none;">
+                  <table>
+                    <tr>
+                      <td colspan="1">
+                        <obs conceptId="1929" id="hospsincelastvisitDisgnosis" answerClasses="{concept}" style="autocomplete"/>
+                        <button id="{n}-addPrevhospdiag" class="addPrevhospdiag">Add</button>
+                        <button id="{n}-removePrevhospdiag" class="removePrevhospdiag">Remove</button>
+                      </td>
+
+
+                    </tr>
+                  </table>
+                </div>
+              </template>
+              <render n="1" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="2" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="3" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="4" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="5" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="6" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="7" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="8" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="9" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="10" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            </repeat>
+          </td>
+        </tr>
+      </obsgroup>
+      <includeIf velocityTest="$patient.gender == 'F' ">
+        <tr>
+          <td colspan="2"><h4>12a. Females: LMP:</h4>
+            <obs conceptId="1836" id="lmp" allowFutureDates="false"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2"><h4>b. Pregnant (Fill out pMTCT Form):</h4>
+            <obs conceptId="8351" id="pregnant" answerConceptIds="1065, 1066" answerLabels="Yes, No"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2"><h4>c. Delivered:</h4>
+            <obs conceptId="1146" id="delivered" style="yes_no"/><span id="deliveredMsg"><small>If yes, fill out pMTCT form</small></span>
+          </td>
+        </tr>
+      </includeIf>
+      <tr>
+        <td colspan="1"><h4>d. Family Planning:</h4>
+          <obs conceptId="8355" id="fp" answerConceptIds="1065, 1066" answerLabels="Yes, No"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4"><h4>e. Method:</h4>
+        <span id="fpgroup">
+            <obs conceptId="374" id="familyplanning" answerConceptIds="190,6725,6220,5275,5279,8300,780,5622,5277,5276"  answerLabels="Condoms,Emergency OCP,Implant,Injectable Hormones,IUD,Lactation Method,OCP,Other,Rhythm Method,Sterilization"/>
+       </span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"><h4>f. If not on family panning, reason:</h4>
+          <obs conceptId="6687" id="notfpreson" answerConceptIds="7062,8299,6685, 5622" answerLabels="Not sexual active,Thinks can't get pregnant, Wants to get pregnant,  Other"/>
+        </td>
+      </tr>
+
+    </table>
+
+  </section>
+
+
+  <section headerLabel=" Current ARVs">
+    <table class="quartercolumn">
+
+      <tr>
+        <td><h4>13a. ARVS:</h4>
+          <obs conceptId="1192" id="currmedArvs" style="yes_no"/>
+        </td>
+      </tr>
+      <tr>
+        <td><h4>b. Has this patient ever had ARV drugs changed for any reason</h4>
+          <obs conceptId="1999" id="changedrug" answerConceptIds="1065, 1066" answerLabels="Yes, No"/>
+        </td>
+      </tr>
+      <tr>
+        <td><h4>c. If started since last visit record the date</h4><obs id="arvstartdatesincelast" conceptId="1499"/>
+        </td>
+      </tr>
+      <tr >
+        <td><h4>d. Treatment Categories</h4><obs conceptId="6744"  id="currmedtreamentcate" answerConceptIds="6693,6694,6695" answerLabels="First Regimen,Second Regimen,Third regimen"/>
+        </td>
+      </tr>
+
+
+
+      <obsgroup groupingConceptId="1941">
+
+        <tr class="arvDrugs1">
+          <td><b>e.</b><obs conceptId="1088" id="arvcurrNvpzdv3tc" answerConceptId="6467" answerLabel="NVP200/ZDV300/3TC150" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrTdf3tcefv" answerConceptId="6964" answerLabel="TDF300mg/3TC300mg/EFV600mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurr3tctdf" answerConceptId="1400" answerLabel="3TC300mg/TDF300mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurr3tcd4t" answerConceptId="6965" answerLabel="3TC150mg/D4T30mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurr3tczdv" answerConceptId="630" answerLabel="3TC150mg/ZDV300mg" style="checkbox"/></td>
+        </tr>
+
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrNvpd4t3tc" answerConceptId="792" answerLabel="NVP200/D4T30/3TC150" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td> <obs conceptId="1088" id="arvcurrTruvada" answerConceptId="6180" answerLabel="Emtri200mg/TDF300(Truvada)" style="checkbox"/></td>
+
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrAluvia" answerConceptId="794" answerLabel="Aluvia(Kaletra)200mg/LPV50mgrit" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td> <obs conceptId="1088" id="arvcurrAtazanavirit" answerConceptId="6160" answerLabel="Atazanavir300/Ritonavir100" style="checkbox"/>
+          </td>
+        </tr>
+
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrAbacavir" answerConceptId="814" answerLabel="Abacavir300mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrEfavirenz" answerConceptId="633" answerLabel="Efavirenz600mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrLamivudine" answerConceptId="628" answerLabel="Lamivudine150mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrNevirapine" answerConceptId="631" answerLabel="Nevirapine200mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrRaltegravir" answerConceptId="6156" answerLabel="Raltegravir" style="checkbox"/></td>
+        </tr>
+
+
+
+        <tr class="arvDrugs1">
+          <td><obs conceptId="1088" id="arvcurrZidovudine" answerConceptId="797" answerLabel="Zidovudine300mg" style="checkbox"/></td>
+        </tr>
+        <tr class="arvDrugs1">
+          <td> <obs conceptId="1088" id="arvcurrOther" answerConceptId="5424" answerLabel="Other" style="checkbox"/></td>
+
+        </tr>
+
+      </obsgroup>
+
+    </table>
+  </section>
+
+
+
+
+  <section headerLabel=" Current prophylaxis and other drugs">
+    <table class="quartercolumn">
+
+      <tr>
+        <td><h4>14a. PCP Prophylaxis:</h4><obs conceptId="1109" id="pcpprophcurr" answerConceptIds="1107, 916, 92" answerLabels="None, Septrin, Dapsone 100mg"/>
+        </td>
+      </tr>
+      <tr>
+        <td><h4>b. TB Prophylaxis</h4><obs conceptId="1110"  id="tbprophcurr" answerConceptIds="1107, 656" answerLabels="None, Isoniazid 300mg"/>
+        </td>
+      </tr>
+      <tr>
+        <td><h4>c.  Cryptococcus Tx:</h4>
+
+          <obs conceptId="1112"   id="cryptocurr"  answerConceptIds="1107,747" answerLabels="None, Fluconazole 200mg"/>
+        </td>
+      </tr>
+
+
+      <tr>
+        <obsgroup groupingConceptId="1919">
+          <td colspan="5"><h4>d. Other Drugs:</h4>
+
+            <repeat>
+              <template>
+                <div id="{n}-toggleOtherDrugs" style="display:none;">
+                  <table>
+                    <tr>
+
+                      <td>
+                        <obs conceptId="1895" id="OtherDrugs" answerClasses="Drug" style="autocomplete"/>
+                        <button id="{n}-addOtherDrugs" class="addOtherDrugs">Add</button>
+                        <button id="{n}-removeOtherDrugs" class="removeOtherDrugs">Remove</button>
+
+                      </td>
+
+
+                    </tr>
+                  </table>
+                </div>
+              </template>
+              <render n="1" concept="Drug"/>
+              <render n="2" concept="Drug"/>
+              <render n="3" concept="Drug"/>
+              <render n="4" concept="Drug"/>
+              <render n="5" concept="Drug"/>
+              <render n="6" concept="Drug"/>
+              <render n="7" concept="Drug"/>
+              <render n="8" concept="Drug"/>
+              <render n="9" concept="Drug"/>
+              <render n="10" concept="Drug"/>
+            </repeat>
+
+          </td>
+        </obsgroup>
+      </tr>
+
+    </table>
+  </section>
+
+  <section headerLabel="Current tuberculosis ">
+    <table class="quartercolumn">
+      <tr>
+        <td><h4>15a. TB treatment</h4><obs conceptId="1111" id="tbcurr" answerConceptId="1107" answerLabel="None"/>
+          <obs conceptId="1111" id="tbcurrYes" answerConceptId="1065" answerLabel="On treatment"/><br></br>
+          <obs conceptId="1113" id="tbstartDate" labelText="b Start Date of TB treatment"/>
+        </td>
+      </tr>
+      <tr>
+        <obsgroup groupingConceptId="8069">
+          <td><h4>c. Site of TB meds pick-up</h4><obs conceptId="8068" id="tbcurrmedspickup"  answerConceptIds="1286, 5622" answerLabels="This Ampath site, Other"/>
+            <obs conceptId="1915" labelText="Specify"/>
+          </td>
+        </obsgroup>
+      </tr>
+
+
+
+      <obsgroup groupingConceptId="6196">
+
+        <tr class="tbCurrentDrugRows">
+          <td><b>d.</b>
+                    <span id="tbcurrRhze"><obs conceptId="1111"  answerConceptId="1131" answerLabel="(RHZE)" style="checkbox"/>
+                    <obs conceptId="1920"/>tabs/day
+             </span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td><span   id="tbcurrRhz"><obs conceptId="1111"  answerConceptId="768" answerLabel="(RHZ)" style="checkbox"/>
+                    <obs conceptId="1920"/>tabs/day</span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td>
+                  <span  id="tbcurrRhe"><obs conceptId="1111" answerConceptId="2231" answerLabel="(RHE)" style="checkbox"/>
+                    <obs conceptId="1920"/>tabs/day
+                </span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td>
+                 <span id="tbcurrRh"><obs conceptId="1111"  answerConceptId="1194" answerLabel="(RH)" style="checkbox"/>
+                    <obs conceptId="1920"/>tabs/day
+                  </span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td>
+                      <span id="tbcurrEh">
+                      <obs conceptId="1111"  answerConceptId="1108" answerLabel="(EH)" style="checkbox"/>
+                      <obs conceptId="1899"/>mg
+                 </span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td><span  id="tbcurrEthambutol"><obs conceptId="1111"  answerConceptId="745" answerLabel="Ethambutol" style="checkbox"/>
+                    <obs conceptId="1921"/>mg/day</span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td><span  id="tbcurrINH"><obs conceptId="1111"  answerConceptId="656" answerLabel="INH" style="checkbox"/>
+                    <obs conceptId="1921"/>mg/day</span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td><span   id="tbcurrMdr"><obs conceptId="1111" answerConceptId="2161" answerLabel="MDR drugs" style="checkbox"/></span>
+          </td>
+
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td><span   id="tbcurrPyrazinamide"><obs conceptId="1111"  answerConceptId="5829" answerLabel="Pyrazinamide" style="checkbox"/>
+                    <obs conceptId="1899"/>mg</span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td>
+                   <span  id="tbcurrRifabutin"><obs conceptId="1111" answerConceptId="6983" answerLabel="Rifabutin" style="checkbox"/>
+                    <obs conceptId="1898"/>tabs
+                   </span>
+          </td>
+        </tr>
+        <tr class="tbCurrentDrugRows">
+          <td><span  id="tbcurrRifampicin"><obs conceptId="1111"  answerConceptId="656" answerLabel="Rifampicin" style="checkbox"/>
+                    <obs conceptId="1899"/>mg</span>
+          </td>
+
+        </tr>
+
+        <tr class="tbCurrentDrugRows">
+          <td><span  id="tbcurrStreptomycin"><obs conceptId="1111"  answerConceptId="438" answerLabel="Streptomycin" style="checkbox"/>
+                    <obs conceptId="1899"/>mg</span>
+          </td>
+        </tr>
+
+        <tr>
+          <td><obs conceptId="1111" id="tbcurrOther" answerConceptId="5622" answerLabel="Other" style="checkbox"/>
+          </td>
+        </tr>
+
+      </obsgroup>
+
+    </table>
+
+  </section>
+
+  <section headerLabel="Adherence">
+    <table class="quartercolumn">
+      <tr>
+        <obsgroup groupingConceptId="9210">
+
+          <td> <b>16a.ARVS </b> <obs conceptId="8288" id="arvadhere" answerConceptIds="6343, 6655, 6656" answerLabels="Good, Fair, Poor"/>
+          </td>
+
+          <td colspan="4"><h4> Reason:</h4>  <span id="arvadhereReason">
+                <obs conceptId="1668" id="arvadhereAlcohol" answerConceptId="1445" answerLabel="Alcohol" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereCost" answerConceptId="6295" answerLabel="Cost" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereDepression" answerConceptId="207" answerLabel="Depression" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereFeltwell" answerConceptId="1647" answerLabel="Felt well" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereForgot" answerConceptId="1648" answerLabel="Forgot" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereGaveaway" answerConceptId="7064" answerLabel="Gave away" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="arvadhereRanout" answerConceptId="6100" answerLabel="Lost/Ran out of pills" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadherePillburden" answerConceptId="7065" answerLabel="Pill Burden" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereSideeffects" answerConceptId="1664" answerLabel="Side Effects" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereStigma" answerConceptId="1666" answerLabel="Stigma" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereStockout" answerConceptId="7043" answerLabel="Stock out" style= "checkbox"/>
+                <obs conceptId="1668"  id="arvadhereTooill" answerConceptId="1548" answerLabel="Too ill" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="arvadhereTravproblem" answerConceptId="820" answerLabel="Travel Problems" style= "checkbox"/>
+                <obs conceptId="1668" id="arvadhereOther" answerConceptId="5622" answerLabel="Other (specify):" style= "checkbox"/>
+                <obs conceptId="1915" id="arvadhereSpecify" style="textbox"/>
+              </span>
+          </td>
+
+        </obsgroup>
+      </tr>
+
+      <tr>
+        <obsgroup groupingConceptId="9211">
+          <td> <b>b. PCP Prophylaxis</b> <obs conceptId="8289" id="pcpprophadhere" answerConceptIds="6343, 6655, 6656" answerLabels="Good, Fair, Poor"/>
+          </td>
+          <td colspan="4"><h4> Reason:</h4><span id="pcpprophadhereReason">
+                <obs conceptId="1668" id="pcpprophadhereAlcohol" answerConceptId="1445" answerLabel="Alcohol" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereCost" answerConceptId="6295" answerLabel="Cost" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereDepression" answerConceptId="207" answerLabel="Depression" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereFeltwell" answerConceptId="1647" answerLabel="Felt well" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereForgot" answerConceptId="1648" answerLabel="Forgot" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereGaveaway" answerConceptId="7064" answerLabel="Gave away" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="pcpprophadhereRanout" answerConceptId="6100" answerLabel="Lost/Ran out of pills" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadherePillburden" answerConceptId="7065" answerLabel="Pill Burden" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereSideeffects" answerConceptId="1664" answerLabel="Side Effects" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereStigma" answerConceptId="1666" answerLabel="Stigma" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereStockout" answerConceptId="7043" answerLabel="Stock out" style= "checkbox"/>
+                <obs conceptId="1668"  id="pcpprophadhereTooill" answerConceptId="1548" answerLabel="Too ill" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="pcpprophadhereTravproblem" answerConceptId="820" answerLabel="Travel Problems" style= "checkbox"/>
+                <obs conceptId="1668" id="pcpprophadhereOther" answerConceptId="5622" answerLabel="Other (specify):" style= "checkbox"/>
+                <obs conceptId="1915" id="pcpprophadhereSpecify" style="textbox"/>
+        </span></td>
+        </obsgroup>
+      </tr>
+
+      <tr>
+        <obsgroup groupingConceptId="9212">
+          <td> <b>c. TB Prophylaxis </b> <obs conceptId="8604" id="tbprophadhere" answerConceptIds="6343, 6655, 6656" answerLabels="Good, Fair, Poor"/>
+          </td>
+          <td colspan="4"><h4> Reason:</h4><span id="tbprophadhereReason">
+                <obs conceptId="1668" id="tbprophadhereAlcohol" answerConceptId="1445" answerLabel="Alcohol" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereCost" answerConceptId="6295" answerLabel="Cost" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereDepression" answerConceptId="207" answerLabel="Depression" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereFeltwell" answerConceptId="1647" answerLabel="Felt well" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereForgot" answerConceptId="1648" answerLabel="Forgot" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereGaveaway" answerConceptId="7064" answerLabel="Gave away" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="tbprophadhereRanout" answerConceptId="6100" answerLabel="Lost/Ran out of pills" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadherePillburden" answerConceptId="7065" answerLabel="Pill Burden" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereSideeffects" answerConceptId="1664" answerLabel="Side Effects" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereStigma" answerConceptId="1666" answerLabel="Stigma" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereStockout" answerConceptId="7043" answerLabel="Stock out" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbprophadhereTooill" answerConceptId="1548" answerLabel="Too ill" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="tbprophadhereTravproblem" answerConceptId="820" answerLabel="Travel Problems" style= "checkbox"/>
+                <obs conceptId="1668" id="tbprophadhereOther" answerConceptId="5622" answerLabel="Other (specify):" style= "checkbox"/>
+                <obs conceptId="1915" id="tbprophadhereSpecify" style="textbox"/>
+              </span></td>
+        </obsgroup>
+      </tr>
+
+      <tr>
+        <obsgroup groupingConceptId="9213">
+          <td> <b>d. TB Treatment </b> <obs conceptId="9204" id="tbadhere" answerConceptIds="6343, 6655, 6656" answerLabels="Good, Fair, Poor"/>
+          </td>
+          <td colspan="4"><h4> Reason:</h4><span id="tbadhereReason">
+                <obs conceptId="1668" id="tbadhereAlcohol" answerConceptId="1445" answerLabel="Alcohol" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereCost" answerConceptId="6295" answerLabel="Cost" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereDepression" answerConceptId="207" answerLabel="Depression" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereFeltwell" answerConceptId="1647" answerLabel="Felt well" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereForgot" answerConceptId="1648" answerLabel="Forgot" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereGaveaway" answerConceptId="7064" answerLabel="Gave away" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="tbadhereRanout" answerConceptId="6100" answerLabel="Lost/Ran out of pills" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadherePillburden" answerConceptId="7065" answerLabel="Pill Burden" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereSideeffects" answerConceptId="1664" answerLabel="Side Effects" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereStigma" answerConceptId="1666" answerLabel="Stigma" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereStockout" answerConceptId="7043" answerLabel="Stock out" style= "checkbox"/>
+                <obs conceptId="1668"  id="tbadhereTooill" answerConceptId="1548" answerLabel="Too ill" style= "checkbox"/><br/>
+                <obs conceptId="1668"  id="tbadhereTravproblem" answerConceptId="820" answerLabel="Travel Problems" style= "checkbox"/>
+                <obs conceptId="1668" id="tbadhereOther" answerConceptId="5622" answerLabel="Other (specify):" style= "checkbox"/>
+                <obs conceptId="1915" id="tbadhereSpecify" style="textbox"/>
+        </span></td>
+        </obsgroup>
+      </tr>
+      <tr>
+        <td> <b>Category: Good: OD:less than 2 doses or BD: less than 3 doses</b></td>
+        <td><b>Fair: OD:2-4 doses or BD: 4-8 doses,  Poor:OD: more than 5 doses or BD: more than 9 doses</b></td>
+      </tr>
+    </table>
+  </section>
+
+  <section headerLabel="Side effects/toxicity">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="5"><h4>17a.  Any side effects attributable to any drug that the patient is currently taking:</h4><obs conceptId="6836" id="currSideeff"  answerConceptIds="1065, 1066" answerLabels="Yes, No"/><br/>
+
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="5"><h4>b. If yes, drug(s):</h4>
+
+          <repeat>
+            <template>
+              <div id="{n}-toggletoxicityDrug" style="display:none;">
+                <table>
+                  <tr>
+                    <td>
+
+                      <obs conceptId="6838" id="toxicitySideEffectDrugs" answerClasses="Drug" style="autocomplete" labelText="Side effect Drug:"/>
+                      <button id="{n}-addtoxicityDrug" class="addtoxicityDrug">Add</button>
+                      <button id="{n}-removetoxicityDrug" class="removetoxicityDrug">Remove</button>
+
+                    </td>
+
+
+                  </tr>
+                </table>
+              </div>
+            </template>
+            <render n="1" concept="Drug"/>
+            <render n="2" concept="Drug"/>
+            <render n="3" concept="Drug"/>
+            <render n="4" concept="Drug"/>
+            <render n="5" concept="Drug"/>
+            <render n="6" concept="Drug"/>
+            <render n="7" concept="Drug"/>
+            <render n="8" concept="Drug"/>
+            <render n="9" concept="Drug"/>
+            <render n="10" concept="Drug"/>
+          </repeat>
+
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"><b>c.</b>If yes, tick all that apply:<span id="toxicitySideEffects">
+                <obs conceptId="6967" id="seAnaemia" answerConceptId="3" answerLabel="Anaemia" style="checkbox"/>
+                <obs conceptId="6967" id="seHep" answerConceptId="29" answerLabel="Hepatitis" style="checkbox"/>
+                <obs conceptId="6967" id="seIris" answerConceptId="1478" answerLabel="IRIS" style="checkbox"/>
+                <obs conceptId="6967" id="seAcidosis" answerConceptId="1874" answerLabel="Lactic Acidosis" style="checkbox"/>
+                <obs conceptId="6967" id="seLipo" answerConceptId="1446" answerLabel="Lipo-dystrophy" style="checkbox"/>
+                <obs conceptId="6967" id="seNeuro" answerConceptId="821" answerLabel="Neuropathy" style="checkbox"/>
+                <obs conceptId="6967" id="seVomit" answerConceptId="5980" answerLabel="Persistent Vomiting" style="checkbox"/>
+                <obs conceptId="6967" id="seRash" answerConceptId="512" answerLabel="Rash" style="checkbox"/><br/>
+                <obs conceptId="6967" id="seSjs" answerConceptId="2030" answerLabel="Steven-Johnson syndrome" style="checkbox"/>
+                <obs conceptId="6967" id="seOther" answerConceptId="5622" answerLabel="Other" style="checkbox"/>
+            </span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2"><b>d.</b>Severity of the reaction:
+          <obs conceptId="6968" id="seSeverity" answerConceptIds="1743,1744,1745,1067,5622" answerLabels="Mild, Moderate, Severe, Unknown, Other"/>
+        </td>
+        <td colspan="2"><b>e.</b>Cause of the reaction/toxicity:
+          <obs conceptId="6975" id="seReaction" answerConceptIds="6969,6970,6971,6972,6973,6974" answerLabels="Certain, Probable/Likely, Possible, Unlikely, Conditional/Unclassified,Unassessable/Unclassified"/>
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <section headerLabel="Vital signs">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="5"><b>18. BP:</b><obs conceptId="5085"/>/<obs conceptId="5086"/>mmHg <b>Pulse</b><obs conceptId="5087"/>rate/min <b>Temp:</b><obs conceptId="5088"/>DEG C <b>Weight:</b><obs conceptId="5089" id="weight"/>KG <b>Height:</b><obs conceptId="5090" id="height"/>CM <b>SpO2:</b><obs conceptId="5092"/>%
+          <b>BMI:</b><obs conceptId="1342" id="bmiField" /><span id="bmiMessage"/><br/>Kg/M2
+          <button  id="missingvitals" value=""  name="button">Missing vital results, submit anyway</button>
+        </td>
+
+      </tr>
+    </table>
+  </section>
+
+
+  <section headerLabel="TB Screening questions">
+    <table class="standard">
+      <tr >
+        <td class="checkboxGroup"><h4>19a. TB Symptoms:</h4>
+<span id="checkboxAll">
+            <obs conceptId="6174" id="tbsympNone" answerConceptId="1107" answerLabel="None"/></span>
+<span id="checkboxCheckbox">
+             <obs conceptId="6174" answerConceptId="5960" id="tbsympBreathlessness" answerLabel="Breathlessness" style="checkbox" />
+             <obs conceptId="6174" answerConceptId="136" id="tbsympChestpain" answerLabel="Chest pain" style="checkbox"/>
+            <obs conceptId="6174" answerConceptId="6171" id="tbsympCough" answerLabel="Cough = 2 weeks" style="checkbox"/>
+            <obs conceptId="6174" answerConceptId="8065" id="tbsympFever" answerLabel="Fever for = 2 weeks" style="checkbox"/>
+            <obs conceptId="6174" answerConceptId="8067" id="tbsympExposure" answerLabel=" New exposure to household contact with TB " style="checkbox"/><br/>
+            <obs conceptId="6174" answerConceptId="832" id="tbsympWeightloss" answerLabel="Noticeable Weight loss" style="checkbox"/>
+
+            <obs conceptId="6174" answerConceptId="8061" id="tbsympNightsweats" answerLabel="Night sweats = 2 weeks" style="checkbox"/><br/>
+            <obs conceptId="6174" labelText="Swelling of:"  answerConceptId="6019" id="tbsympswellingAbdomen" answerLabel="Abdomen" style="checkbox"/>
+            <obs conceptId="6174" answerConceptId="8060" id="tbsympswellingArmpit" answerLabel="Armpit" style="checkbox"/>
+            <obs conceptId="6174" answerConceptId="8066" id="tbsympswellingGroin" answerLabel="Groin" style="checkbox"/>
+            <obs conceptId="6174" answerConceptId="5312" id="tbsympswellingJoints" answerLabel="Joints" style="checkbox"/>
+            <obs conceptId="6174" id="tbsympswellingNeck" answerConceptId="8059" answerLabel="Neck" style="checkbox"/>
+
+</span>
+        </td>
+      </tr>
+      <tr>
+        <td><h4>b. TB Status:</h4>
+          <obs conceptId="8292" answerConceptIds="1118,1107,6176,6971" answerLabels="Not assessed,No signs,On TB treatment,Suspect"/>
+        </td>
+      </tr>
+    </table>
+
+  </section>
+
+
+  <section headerLabel="STI">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="5"><h4>20. Do you have any of the following:</h4>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="1">a.Genital Ulcers:<obs conceptId="6235"  id="genitalReview" answerConceptId="864" answerLabel="Yes" style="checkbox"/>
+          <obs conceptId="6236" id="genitalNegative" answerConceptId="864" answerLabel="No" style="checkbox"/>
+
+        </td>
+
+        <td colspan="2">b.Urethral Discharge:<obs conceptId="6235"  id="urethralReview" answerConceptId="5995" answerLabel="Yes" style="checkbox"/>
+          <obs conceptId="6236" id="urethralNegative" answerConceptId="5995" answerLabel="No" style="checkbox"/>
+
+        </td>
+
+        <td colspan="2">c.Vaginal Discharge:<obs conceptId="6235"  id="vaginalReview" answerConceptId="5993" answerLabel="Yes" style="checkbox"/>
+          <obs conceptId="6236" id="vaginalNegative" answerConceptId="5993" answerLabel="No" style="checkbox"/>
+
+        </td>
+      </tr>
+    </table>
+  </section>
+
+
+  <section headerLabel="WHO staging">
+    <table class="quartercolumn">
+
+      <tr><td colspan="1"><h4>21. WHO stage:</h4><obs conceptId="5356" id="whoStage" answerConceptIds="1204, 1205, 1206, 1207" answerLabels="1, 2, 3, 4"/>
+      </td>
+        <td colspan="3"><h4>Criteria:</h4><obs conceptId="6048" id="whoStageCriteria" type="text" value=""/></td>
+        <td colspan="1"><h4>New stage:</h4><obs conceptId="1248"  style="yes_no"/></td>
+      </tr>
+
+    </table>
+  </section>
+
+  <section headerLabel="Test results: (Please record date sample  was drawn, rather than date test was run)">
+    <table class="quartercolumn">
+
+      <tr>
+        <td>22.<h5>Test</h5></td>
+        <td colspan="3"><h5>Result and Test Date</h5></td>
+      </tr>
+      <tr>
+        <td>Platelets/mm3</td>
+        <td  colspan="3"><obs conceptId="729" id="testresultPlatelets" showDate="true" allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>WBC/mm3</td>
+        <td  colspan="3"><obs conceptId="678" id="testresultWbc" showDate="true" allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>Hgb g/dL</td>
+        <td  colspan="3"><obs conceptId="21" id="testresultHgb" showDate="true"  allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>MCV</td>
+        <td  colspan="3"><obs conceptId="851" id="testresultMcv" showDate="true" allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>ALC/ mm3</td>
+        <td  colspan="3"><obs conceptId="952" id="testresultAlc" showDate="true" allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>CD4</td>
+        <td  colspan="3"><obs conceptId="5497" id="testresultCd4" showDate="true" allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>CD4%</td>
+        <td  colspan="3"><obs conceptId="730" id="testresultCd4%" showDate="true"  allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>Viral Load</td>
+        <td  colspan="3"><obs conceptId="856" id="testresultViral" showDate="true" allowFutureDates="false"/></td>
+
+
+      </tr>
+      <tr>
+        <td>Creatinine mmol/L</td>
+        <td  colspan="3"><obs conceptId="790" id="testresultCreatinine" showDate="true" allowFutureDates="false"/></td>
+      </tr>
+      <tr>
+        <td>SGPT(ALT)</td>
+        <td  colspan="3"><obs conceptId="654" id="testresultSgpt" showDate="true" allowFutureDates="false"/></td>
+
+      </tr>
+
+      <tr>
+        <td>VDRL</td>
+        <td  colspan="3"><obs conceptId="299" id="testresultVdrl" showDate="true" allowFutureDates="false"  answerConceptIds="703,664,1138,1304" answerLabels="Positive,Negative,Indeterminate,Poor sample quality"/></td>
+      </tr>
+
+
+      <tr>
+        <td>Sputum Gene xpert MTB</td>
+        <td  colspan="3"><obs conceptId="8070" id="testresultXpert" showDate="true" allowFutureDates="false" answerConceptIds="703,664,1138,1304" answerLabels="Positive,Negative,Indeterminate,Poor sample quality"/></td>
+      </tr>
+
+
+      <tr>
+        <td>Sputum Gene xpert RIF</td>
+        <td  colspan="3"><obs conceptId="8071" id="testresultXpert" showDate="true" allowFutureDates="false" answerConceptIds="703,664,1138,1304" answerLabels="Positive,Negative,Indeterminate,Poor sample quality"/></td>
+      </tr>
+
+      <tr>
+        <td>Sputum  AFB Smear</td>
+        <td><obs conceptId="307" id="testresultAfb" showDate="true" allowFutureDates="false" answerConceptIds="2301,2302,2303,703,664,1138,1304" answerLabels="1+,2+,3+,Positive,Negative,Indeterminate,Poor sample quality"/></td>
+      </tr>
+
+      <tr>
+        <td>Sputum  Culture</td>
+        <td  colspan="3"><obs conceptId="2311" id="testresultCulture" showDate="true"  allowFutureDates="false" answerConceptIds="703,664,1304, 8242,8243" answerLabels="Positive,Negative,Poor sample quality,Mycobacterium tuberculosis,NonTuberculosis mycobacteria"/></td>
+      </tr>
+
+
+      <tr>
+        <td colspan="1"><h5>CXR</h5></td>
+        <td colspan="3"><h5>Code:</h5><obs conceptId="012" id="testresultCXR" showDate="true"  allowFutureDates="false" answerConceptIds="1115,5158,6052,6050,6049,1137,1136,5622" answerLabels="Normal,Cardiomegaly,Cavitary,Diffuse abn/non-miliary,Infiltrate,Milliary,PI Effusion,Other"/></td>
+      </tr>
+    </table>
+  </section>
+
+  <section headerLabel="Problem list">
+    <table class="quartercolumn">
+
+      <obsgroup groupingConceptId="1284">
+        <tr><td colspan="4">
+          <repeat>
+            <template>
+              <div id="{n}-toggleContainer" style="display:none;">
+                <table>
+                  <tr>
+                    <td colspan="1">
+                      <obs conceptId="6042" answerClasses="{concept}" style="autocomplete" labelText="23a. Problem Added:"/>
+                      <button id="{n}-addEntry" class="addEntry">Add</button>
+                      <button id="{n}-removeEntry" class="removeEntry">Remove</button>
+                    </td>
+
+
+                  </tr>
+                </table>
+              </div>
+            </template>
+            <render n="1" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="2" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="3" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="4" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="5" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="6" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="7" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="8" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="9" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="10" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+          </repeat>
+        </td>
+
+
+
+
+
+
+          <td colspan="4">
+            <repeat>
+              <template>
+                <div id="{n}-toggleContainer" style="display:none;">
+                  <table>
+                    <tr>
+                      <td><obs conceptId="6097" answerClasses="{concept}" style="autocomplete" labelText="b. Problem Resolved"/>
+                        <button id="{n}-addEntry" class="addEntry">Add</button>
+                        <button id="{n}-removeEntry" class="removeEntry">Remove</button>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </template>
+
+              <render n="21" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="22" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="23" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="24" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="25" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="26" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="27" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="28" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="29" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+              <render n="30" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            </repeat>
+          </td></tr>
+      </obsgroup>
+
+    </table>
+  </section>
+
+
+  <section headerLabel="ARV plan">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="5"><b>24a. ARV Plan:</b><obs conceptId="1255" id="arvPlan" answerConceptIds=" 981, 1259, 1258, 1257, 1849, 1107, 1850, 1256, 1260" answerLabels="  Change dose, Change regimen, Change formulation, Continue regimen, Drug substitution, Not on ARVS, Restart, Start ARVs,  Stop all"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"><h4>b.Reason to Start ARVs</h4>
+          <obs conceptId="1251" id="arvstartreason" answerConceptIds="9215, 6096,  1206, 1207" answerLabels="CD4 less than 500, Discordant couple,  WHO stage 3, WHO stage 4"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"><h4>c.Reason for stopping/change/substitution/interruption</h4>
+          <obsgroup groupingConceptId="1924">
+            <obs conceptId="1252" id="arvstopreason" answerConceptIds="1434,843,7043,58,6419,8296,5240,1930,6295,8308,44,7061,1504,5622,102,8297" answerLabels="Adherence concerns,Clinical treatment failure,Drug out of stock,Due to new TB,Illness/hospitalization,Immunologic failure,Lost to follow-up,New drug available,Patient lacks finances,Planned Rx interruption,Pregnancy,Risk of pregnancy,Other patient décisions,Other,Toxicity,Virologic failure"/>
+            <h5>If toxicity, please provide cause</h5><obs conceptId="1879" id="arvstopreasonTox" answerConceptIds="151,7862,7863,3,1443,207,175,16,877,7771,5949,620,8607,29,7687,1486,867,1478,215,1877,1874,1446,7866,7867,121,5978,6636,1887,5622,1875,821,512,1885,1886,6033,7873,7865,5960,1876,1878,2030,7864,839,5980,5226" answerLabels="Abdominal pain,Akathisia,Akinesia,Anemia,Anxiety,Depression,Diabetes Mellitus,Diarrhea,Dizziness,Extrapyramidal side effects,Fatigue,Headache,Hepatotoxicity,Hepatitis,Hyperactive,Hypotension,Insomnia,IRIS,Jaundice,Kidney stone,Lacti acidosis,Lipodystrophy,Mania,Metabolic side effects,Myalgia,Nausea,Neuropathy,Optic neuritis,Other,Pancreatitis,Peripheral neuropathy,Rash,Renal failure,Renal insufficiency,Renal disease,Sedation,Sexual dysfunction,Shortness of breath,Sleep disturbance,Stroke,Stevens-Johnson syndrome,Tardive dyskinesia,Thrombocytopenia,Vomiting,Weakness"/>
+            <obs conceptId="1915" id="arvstopreasonSpecify" labelText="Other Specify:"/>
+          </obsgroup>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"><h4>d. Eligible for ARVs but not started:</h4>
+          <obsgroup groupingConceptId="2046">
+            <obs conceptId="1505" id="arveligible" answerConceptIds="1434,5487,5622,1504" answerLabels="Adherence Concerns,On TB Treatment, Other,Patient  Refused"/>
+            <obs conceptId="1915" id="arveligibleSpecify" labelText="Specify:"/>
+          </obsgroup>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"><h4>e.If patient on ARVS, choose regimen below:</h4></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplan3tcTdf" answerConceptId="1400" answerLabel="3TC300mg/TDF300mg" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplan3tcD4t" answerConceptId="6965" answerLabel="3TC150mg/D4T30mg"  style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplan3tcZdv" answerConceptId="630" answerLabel="3TC150mg/ZDV300mg" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanNvpZdv3tc" answerConceptId="6467" answerLabel="NVP200mg/ZDV300mg/3TC150mg" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanNvpD4t3tc" answerConceptId="792" answerLabel="NVP200/D4T30/3TC150" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanTdf3tcEfv" answerConceptId="6964" answerLabel="TDF300mg/3TC300mg/EFV600mg" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanAluvia" answerConceptId="794" answerLabel="Aluvia(Kaletra)200mgLPV" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td colspan="2"><obs conceptId="1250" id="arvplanAtazRit" answerConceptId="6160" answerLabel="Atazanavir300/Ritonavir100"  style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td colspan="2"><obs conceptId="1250" id="arvplanTruvada" answerConceptId="6180" answerLabel="Truvada(Emtri200mg/TDF300)" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanAbacavir" answerConceptId="814" answerLabel="Abacavir300mg"  style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanEfavirenz" answerConceptId="633" answerLabel="Efavirenz600mg"  style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanLamivudine" answerConceptId="628" answerLabel="Lamivudine150mg"  style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanNevirapine" answerConceptId="631" answerLabel="Nevirapine200mg"  style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td colspan="2"><obs conceptId="1250" id="arvplanRaltergravir" answerConceptId="6156" answerLabel="Raltergravir400mg" style="checkbox"/></td>
+      </tr>
+
+      <tr class="arvDrugRows">
+        <td><obs conceptId="1250" id="arvplanZidovudine" answerConceptId="797" answerLabel="Zidovudine 300mg" style="checkbox"/></td>
+      </tr>
+      <tr class="arvDrugRows">
+        <td colspan="2"><obs conceptId="1250" id="arvplanOther" answerConceptId="5424" answerLabel="Other:" style="checkbox"/></td>
+      </tr>
+
+    </table>
+  </section>
+
+  <section headerLabel="Prophylaxis plan">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="5"><h4>25a. PCP Prophylaxis Plan:</h4>
+          <obs conceptId="1261" id="pcpPlan" answerConceptIds=" 1259, 1257,1107,1256, 1260" answerLabels="Change Regimen,Continue,None, Start, Stop"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"><h4>b.If Change/Stop, reason:</h4>
+          <obsgroup groupingConceptId="1925">
+            <obs conceptId="1262" id="pcpstopreason" answerConceptIds="102,5622" answerLabels="Toxicity, Other"/>
+            <h5>If toxicity, please provide cause:</h5><obs conceptId="1879" id="pcpstopreasonTox" answerConceptIds="151,7862,7863,3,1443,207,175,16,877,7771,5949,620,8607,29,7687,1486,867,1478,215,1877,1874,1446,7866,7867,121,5978,6636,1887,5622,1875,821,512,1885,1886,6033,7873,7865,5960,1876,1878,2030,7864,839,5980,5226" answerLabels="Abdominal pain,Akathisia,Akinesia,Anemia,Anxiety,Depression,Diabetes Mellitus,Diarrhea,Dizziness,Extrapyramidal side effects,Fatigue,Headache,Hepatotoxicity,Hepatitis,Hyperactive,Hypotension,Insomnia,IRIS,Jaundice,Kidney stone,Lacti acidosis,Lipodystrophy,Mania,Metabolic side effects,Myalgia,Nausea,Neuropathy,Optic neuritis,Other,Pancreatitis,Peripheral neuropathy,Rash,Renal failure,Renal insufficiency,Renal disease,Sedation,Sexual dysfunction,Shortness of breath,Sleep disturbance,Stroke,Stevens-Johnson syndrome,Tardive dyskinesia,Thrombocytopenia,Vomiting,Weakness"/>
+            <obs conceptId="1915" id="pcpstopreasonSpecify" labelText="Other Specify"/>
+          </obsgroup>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="5"><h4>c. If Start/Cont/Change, regimen:</h4>
+          <obs conceptId="1263" id="pcpMed" answerConceptIds="92,916" answerLabels="Dapsone,Septrin"/>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="5"><h4>d.TB Prophylaxis Plan:</h4>
+          <obs conceptId="1265" id="tbprophPlan" answerConceptIds=" 1259,1257,1107,1256,1260" answerLabels=" Change Regimen, Continue,None, Start, Stop"/>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="5"><h4>e.If Stoping, reason:</h4>
+          <obsgroup groupingConceptId="1926">
+            <obs conceptId="1266" id="tbprophstopreason" answerConceptIds="58,1267,5622,102" answerLabels=" Active TB,Completed, Other, Toxicity"/>
+            <h5>If toxicity, please provide cause:</h5><obs conceptId="1879" id="tbprophstopreasonTox" answerConceptIds="151,7862,7863,3,1443,207,175,16,877,7771,5949,620,8607,29,7687,1486,867,1478,215,1877,1874,1446,7866,7867,121,5978,6636,1887,5622,1875,821,512,1885,1886,6033,7873,7865,5960,1876,1878,2030,7864,839,5980,5226" answerLabels="Abdominal pain,Akathisia,Akinesia,Anemia,Anxiety,Depression,Diabetes Mellitus,Diarrhea,Dizziness,Extrapyramidal side effects,Fatigue,Headache,Hepatotoxicity,Hepatitis,Hyperactive,Hypotension,Insomnia,IRIS,Jaundice,Kidney stone,Lacti acidosis,Lipodystrophy,Mania,Metabolic side effects,Myalgia,Nausea,Neuropathy,Optic neuritis,Other,Pancreatitis,Peripheral neuropathy,Rash,Renal failure,Renal insufficiency,Renal disease,Sedation,Sexual dysfunction,Shortness of breath,Sleep disturbance,Stroke,Stevens-Johnson syndrome,Tardive dyskinesia,Thrombocytopenia,Vomiting,Weakness"/>
+            <obs conceptId="1915" id="tbprophstopreasonSpecify" labelText="Other Specify"/>
+          </obsgroup>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="5"><h4>f.Crypto Prophylaxis Plan:</h4>
+          <obs conceptId="1277" id="cryptPlan" answerConceptIds=" 1257,1107,1256" answerLabels=" Continue Fluconazole,None, Start Fluconazole"/>
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <section headerLabel="TB Treatment plan">
+    <table class="quartercolumn">
+      <tr>
+        <td colspan="5"><h4>26a. Plan</h4>
+          <obs conceptId="1268" id="tbPlan" answerConceptIds=" 1259, 1257,1107, 981, 1256,1849,1260" answerLabels=" Change to Continuation, Continue Regimen, None, Re-dose, Start Induction, Substitution, Stop"/>
+        </td>
+      </tr>
+      <obsgroup groupingConceptId="1927">
+        <tr>
+          <td colspan="5"><h4>b. If plan is to stop/change/re-dose, reason: </h4>
+
+            <obs conceptId="1268" id="tbstopreason" answerConceptIds="1267,5622,102" answerLabels="Completed, Other,Toxicity"/>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <obsgroup groupingConceptId="1926">
+              <h4>If completed, date:</h4><obs conceptId="2041"  id="tbCompletedDate"/>
+            </obsgroup>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h5>If toxicity, please provide cause:</h5><obs conceptId="1879" id="tbstopreasonTox" answerConceptIds="151,7862,7863,3,1443,207,175,16,877,7771,5949,620,8607,29,7687,1486,867,1478,215,1877,1874,1446,7866,7867,121,5978,6636,1887,5622,1875,821,512,1885,1886,6033,7873,7865,5960,1876,1878,2030,7864,839,5980,5226" answerLabels="Abdominal pain,Akathisia,Akinesia,Anemia,Anxiety,Depression,Diabetes Mellitus,Diarrhea,Dizziness,Extrapyramidal side effects,Fatigue,Headache,Hepatotoxicity,Hepatitis,Hyperactive,Hypotension,Insomnia,IRIS,Jaundice,Kidney stone,Lacti acidosis,Lipodystrophy,Mania,Metabolic side effects,Myalgia,Nausea,Neuropathy,Optic neuritis,Other,Pancreatitis,Peripheral neuropathy,Rash,Renal failure,Renal insufficiency,Renal disease,Sedation,Sexual dysfunction,Shortness of breath,Sleep disturbance,Stroke,Stevens-Johnson syndrome,Tardive dyskinesia,Thrombocytopenia,Vomiting,Weakness"/>
+            <obs conceptId="1915" id="tbstopreasonSpecify" labelText="Other Specify"/>
+          </td>
+        </tr>
+      </obsgroup>
+
+
+
+
+
+      <tr>
+        <td colspan="5"><h4>c. If re/starting, reason: </h4>
+          <obs conceptId="6981" answerConceptIds="6978,6979,2161,6977,6980" answerLabels=" Defaulted, Failure, MDR TB regimen,New treatment, Relapse/re-infection"/>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="5"><h4>d. If on treatment: start date</h4>
+          <obs conceptId="1113" id="tbstartDatePlan"/>
+        </td>
+      </tr>
+
+      <tr>
+        <td><h4>e. Site of TB meds pick-up</h4>
+          <obsgroup groupingConceptId="8069">
+            <obs conceptId="8068" id="tbpickupLocation" answerConceptIds="1286,5622" answerLabels="Ampath,Other"/>
+            <obs conceptId="1915" labelText="Specify"/>
+          </obsgroup>
+        </td>
+      </tr>
+
+      <obsgroup groupingConceptId="1825">
+
+        <tr class="tbPlanDrugs">
+          <td><b>f.</b>
+            <obs conceptId="1270" id="tbplanRhze" answerConceptId="1131" answerLabel="(RHZE)" style="checkbox"/>
+            <obs conceptId="1920"/>tabs/day
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanRhz" answerConceptId="768" answerLabel="(RHZ)" style="checkbox"/>
+            <obs conceptId="1920"/>tabs/day
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanRhe" answerConceptId="2231" answerLabel="(RHE)" style="checkbox"/>
+            <obs conceptId="1920"/>tabs/day
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanRh" answerConceptId="1194" answerLabel="(RH)" style="checkbox"/>
+            <obs conceptId="1920"/>tabs/day
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanEh" answerConceptId="1108" answerLabel="(EH)" style="checkbox"/>
+            <obs conceptId="1899"/>mg
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanEthambutol" answerConceptId="745" answerLabel="Ethambutol" style="checkbox"/>
+            <obs conceptId="1921"/>mg/day
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270"  id="tbplanInh" answerConceptId="656" answerLabel="INH" style="checkbox"/>
+            <obs conceptId="1921"/>mg/day
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanMdr" answerConceptId="2161" answerLabel="MDR drugs" style="checkbox"/>
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanPyrazinamide" answerConceptId="5829" answerLabel="Pyrazinamide" style="checkbox"/>
+            <obs conceptId="1899"/>mg
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanRifabutin" answerConceptId="6983" answerLabel="Rifabutin" style="checkbox"/>
+            <obs conceptId="1898"/>tabs
+          </td>
+        </tr>
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270"  id="tbplanRifampicin" answerConceptId="656" answerLabel="Rifampicin" style="checkbox"/>
+            <obs conceptId="1899"/>mg
+          </td>
+        </tr>
+
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanStreptomycin" answerConceptId="438" answerLabel="Streptomycin" style="checkbox"/>
+            <obs conceptId="1899"/>mg
+          </td>
+        </tr>
+
+        <tr class="tbPlanDrugs">
+          <td>
+            <obs conceptId="1270" id="tbplanOther" answerConceptId="5622" answerLabel="Other" style="checkbox"/>
+          </td>
+        </tr>
+      </obsgroup>
+    </table>
+  </section>
+
+  <section headerLabel="Additional drugs">
+    <table class="quartercolumn">
+      <obsgroup groupingConceptId="1901">
+        <tr><td colspan="5"><h4>27. Add drugs:</h4>
+          <repeat>
+            <template>
+              <div id="{n}-toggleDrug" style="display:none;">
+                <table>
+                  <tr>
+                    <td>
+                      <obs conceptId="1895" answerClasses="Drug" style="autocomplete" labelText="Drug:"/>
+                      <button id="{n}-addDrug" class="addDrug">Add</button>
+                      <button id="{n}-removeDrug" class="removeDrug">Remove</button>
+                    </td>
+
+
+                  </tr>
+                </table>
+              </div>
+            </template>
+            <render n="1" concept="Drug"/>
+            <render n="2" concept="Drug"/>
+            <render n="3" concept="Drug"/>
+            <render n="4" concept="Drug"/>
+            <render n="5" concept="Drug"/>
+            <render n="6" concept="Drug"/>
+            <render n="7" concept="Drug"/>
+            <render n="8" concept="Drug"/>
+            <render n="9" concept="Drug"/>
+            <render n="10" concept="Drug"/>
+          </repeat>
+        </td></tr>
+      </obsgroup>
+    </table>
+  </section>
+
+  <section headerLabel="Test ordered">
+    <table class="quartercolumn">
+      <obsgroup groupingConceptId="8191">
+        <tr>
+          <td colspan="4"><h4>28. Tests:</h4><span id="testsordered">
+            <obs conceptId="1271" id="testNone" answerConceptId="1107" answerLabel="None" style="checkbox"/>
+          </span>
+          <span id="testsord">
+            <obs conceptId="1271" id="testCbc" answerConceptId="1019" answerLabel="CBC" style="checkbox"/>
+            <obs conceptId="1271" id="testCd4" answerConceptId="657" answerLabel="CD4" style="checkbox"/>
+            <obs conceptId="1271" id="testCxr" answerConceptId="12" answerLabel="CXR" style="checkbox"/>
+            <obs conceptId="1271" id="testElisa" answerConceptId="1042" answerLabel="Elisa" style="checkbox"/>
+            <obs conceptId="1271" id="testXpert" answerConceptId="8070" answerLabel="Gene Xpert" style="checkbox"/>
+            <obs conceptId="1271" id="testHgb" answerConceptId="21" answerLabel="Hgb" style="checkbox"/>
+            <obs conceptId="1271" id="testSgpt" answerConceptId="654" answerLabel="SGPT" style="checkbox"/>
+            <obs conceptId="1271" id="testAfb" answerConceptId="307" answerLabel="Sputum AFB" style="checkbox"/>
+            <obs conceptId="1271" id="testCulture" answerConceptId="2311" answerLabel="TB Culture" style="checkbox"/>
+            <obs conceptId="1271" id="testViral" answerConceptId="856" answerLabel="Viral Load" style="checkbox"/>
+            <obs conceptId="1271" id="testVdrl" answerConceptId="299" answerLabel="VDRL" style="checkbox"/>
+            <obs conceptId="1271" id="testOther" answerConceptId="5622" answerLabel="Other" style="checkbox"/>
+            <obs conceptId="1915" id="testSpecify" answerLabel="Specify"/>
+           </span></td>
+        </tr>
+      </obsgroup>
+
+
+    </table>
+
+  </section>
+
+  <section headerLabel="Referrals ordered">
+    <table class="quartercolumn">
+      <obsgroup groupingConceptId="1932">
+        <tr>
+          <td><h4>29a. What referrals were made to the patient </h4><span id="refordered">
+      <obs conceptId="1272"  id="refNone" answerConceptId="1107" answerLabel="None" style= "checkbox"/>
+    </span>
+    <span id="reford">
+        <obs conceptId="1272" id="refAlcohol" answerConceptId="1288" answerLabel="Alcohol counselling/support groups" style= "checkbox"/>
+        <obs conceptId="1272"  id="refAdherence" answerConceptId="5488" answerLabel="Adherence counselling" style= "checkbox"/>
+        <obs conceptId="1272" id="refCardiology" answerConceptId="8074" answerLabel="Cardiology" style= "checkbox"/>
+        <obs conceptId="1272" id="refDiabetes" answerConceptId="7341" answerLabel="Diabetes" style= "checkbox"/>
+        <obs conceptId="1272" id="refDisclosure" answerConceptId="1167" answerLabel="Disclosure counselling" style= "checkbox"/><br/>
+        <obs conceptId="1272" id="refFp" answerConceptId="5483" answerLabel="Family Planning services" style= "checkbox"/>
+        <obs conceptId="1272" id="refOncology" answerConceptId="8053" answerLabel="Oncology" style= "checkbox"/>
+        <obs conceptId="1272" id="refMental" answerConceptId="5489" answerLabel="Mental Health Services" style= "checkbox"/>
+        <obs conceptId="1272" id="refNutrition" answerConceptId="5484" answerLabel="Nutritional support" style= "checkbox"/>
+        <obs conceptId="1272" id="refPsycho" answerConceptId="1581" answerLabel="Psychosocial support" style= "checkbox"/><br/>
+        <obs conceptId="1272" id="refPmtct" answerConceptId="1776" answerLabel="pMTCT" style= "checkbox"/>
+        <obs conceptId="1272" id="refSocial" answerConceptId="1580" answerLabel="Social work services" style= "checkbox"/>
+        <obs conceptId="1272" id="refTbdot" answerConceptId="5487" answerLabel="TB/DOT Program" style= "checkbox"/>
+        <obs conceptId="1272" id="refOther" answerConceptId="5622" answerLabel="Other (specify):" style= "checkbox"/>
+        <obs conceptId="1915" id="refSpecify" style="textbox"/>
+     </span></td>
+        </tr>
+      </obsgroup>
+      <tr>
+        <td><h4>b.If referred for hospitalization, choose location: </h4>
+          <obs conceptId="1273" id="hospitalization" answerConceptIds="1275,1274,5622" answerLabels="Local Health Centre/Hospital,MTRH,Other"/>
+        </td>
+      </tr>
+      <tr><td colspan="4">
+        <obsgroup groupingConceptId="1852">
+          <repeat>
+            <template>
+              <div id="{n}-toggleHospreason" style="display:none;">
+                <table>
+                  <tr>
+                    <td colspan="2"><b>c.Reason for Hospitalisation:</b>
+                      <obs conceptId="1929" answerClasses="{concept}" style="autocomplete" />
+                      <button id="{n}-addHospreason" class="addHospreason">Add</button>
+                      <button id="{n}-removeHospreason" class="removeHospreason">Remove</button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </template>
+            <render n="1" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="2" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="3" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="4" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="5" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="6" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="7" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="8" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="9" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+            <render n="10" concept="Diagnosis,Symptom,Symptom/Finding,Finding"/>
+          </repeat>
+        </obsgroup>
+      </td>
+      </tr>
+
+      <obsgroup groupingConceptId="2035">
+        <tr>
+          <td>
+            <h4>30.Transfer care to other centre: </h4><br/>
+            <obs conceptId="1285" id="transAmpath" answerConceptId="1286" answerLabel="AMPATH" style= "checkbox"/>
+
+            <obs id="transferOutLocation" conceptId="1915" style="location"/>
+
+            <obs conceptId="1285" id="transNonampath" answerConceptId="1287" answerLabel="Non-Ampath" style= "checkbox"/>
+            <obs conceptId="1915" id="transferout" style="text"/>
+          </td>
+        </tr>
+      </obsgroup>
+    </table>
+  </section>
+
+  <section headerLabel="Next appointment">
+    <table>
+
+      <tr>
+
+        <td><h4>31. Return to clinic Date:</h4><span class="required">*</span><obs conceptId="5096" id="rtc"  style="date" allowFutureDates="true"/></td>
+      </tr>
+    </table>
+  </section>
+  <section headerLabel="Provider">
+    <table border="1" width="100%">
+      <tr>
+        <td> Nurse </td>
+        <td> p# </td>
+        <td> Medical Officer </td>
+        <td> p# </td>
+      </tr>
+      <tr>
+        <td> Clinical Officer </td>
+        <td><span class="required">*</span><encounterProvider id="encounterProvider" type="autocomplete"/></td>
+        <td> Consultant Physician </td>
+        <td> p# </td>
+      </tr>
+    </table>
+
+  </section>
+
+  <submit/>
+
+</htmlform>
