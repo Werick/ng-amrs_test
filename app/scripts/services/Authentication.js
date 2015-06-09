@@ -60,7 +60,7 @@ angular.module('ngAmrsTestApp')
 
       service.getUsers = function()
       {
-        authdata=btoa('werick' + ':' + 'Sylvia@ericks1');
+        authdata=btoa('username' + ':' + 'password');
         $http.defaults.headers.common['Authorization'] = 'Basic ' + authdata;
         return $resource(url+'user?q=werick');
       }
